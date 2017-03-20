@@ -1,17 +1,15 @@
 #include "../inc/Scanner.hpp"
-#include <iostream>
 
-Scanner::Scanner ( const std::string& filename ) {
+compiler::Scanner::Scanner ( const std::string& filename ) {
   input.open(filename);
   token = Token::UNDEFINED;
   tag = Tag::UNDEFINED;
   row = 1;
   column = 0;
-  countID = 0;
   initMap();
 };
 
-void Scanner::open ( const std::string& filename ) {
+void compiler::Scanner::open ( const std::string& filename ) {
   input.close();
   input.open(filename);
   token = Token::UNDEFINED;
@@ -21,7 +19,7 @@ void Scanner::open ( const std::string& filename ) {
   lexeme.clear();
 };
 
-void Scanner::nextLex () {
+void compiler::Scanner::nextLex () {
   if (!input.is_open())
     return;
 
@@ -47,15 +45,22 @@ void Scanner::nextLex () {
     else if (sym == '\n') {
       ++row;
       column = 0;
-    }
-    if (std::isalpha(sym) || sym == '_') {
+    } else if (std::isalpha(sym) || sym == '_') {
       lexeme += sym;
-      readID();
+      readId();
       return;
     }
     if (std::isdigit(sym)) {
       lexeme += sym;
-      readDigit();
+      readDec();
+      return;
+    }
+    if (sym == '%') {
+      readBin();
+      return;
+    }
+    if (sym == '$') {
+      readHex();
       return;
     }
     if (std::ispunct(sym)) {
@@ -127,37 +132,8 @@ void Scanner::nextLex () {
   token = Token::END_OF_FILE;
   tag = Tag::UNDEFINED;
 };
-std::string Scanner::getNameLex () const {
-  return lexeme;
-};
-Scanner::Token Scanner::getTokenLex () const {
-  return token;
-};
-std::string Scanner::getTokenName () const {
-  switch (token) {
-    case (Token::END_OF_FILE) : return "END_OF_FILE";
-    case (Token::IDENTIFICATOR) : return "IDENTIFICATOR";
-    case (Token::LITERAL) : return "LITERAL";
-    case (Token::PUNCTUATION) : return "PUNCTUATION";
-    case (Token::OPERATOR) : return "OPERATOR";
-    case (Token::SPACE) : return "SPACE";
-    case (Token::DIRECTIVE) : return "DIRECTIVE";
-  };
-  return "UNDEFINED";
-};
-unsigned long int Scanner::getTagLex () const {
-  if (token == Token::IDENTIFICATOR && tag == Tag::UNDEFINED)
-    return countID + (unsigned long int)(Tag::DIRECTIVE);
-  return (unsigned long int)tag;
-};
-unsigned long int Scanner::getRowLex () const {
-  return row;
-};
-unsigned long int Scanner::getColumnLex () const {
-  return column - lexeme.length() - (tag == Tag::STRING ? 2 : 0) - (tag == Tag::CHARACTER ? 2 : 0) - countAph;
-}
 
-void Scanner::readID ( void ) {
+void compiler::Scanner::readId ( void ) {
   sym = input.get();
 
   while (!input.eof() && (std::isalnum(sym) || sym == '_')) {
@@ -177,14 +153,13 @@ void Scanner::readID ( void ) {
   if (iter == book.end()) {
     token = Token::IDENTIFICATOR;
     tag = Tag::UNDEFINED;
-    ++countID;
   } else {
     token = iter->second.first;
     tag = iter->second.second;
   }
 };
 
-void Scanner::readDigit ( void ) {
+void compiler::Scanner::readDec ( void ) {
   sym = input.get();
   ++column;
   unsigned char countDots = 0;
@@ -203,6 +178,7 @@ void Scanner::readDigit ( void ) {
       lexeme.pop_back();
     } else {
       lexeme += sym;
+      countAph = -1;
       token = Token::UNDEFINED;
       tag = Tag::UNDEFINED;
       return;
@@ -219,59 +195,140 @@ void Scanner::readDigit ( void ) {
   else tag = Tag::INTEGER;
 };
 
-void Scanner::readString( void ) {
-  if (sym == '#') { //ASCII
-    std::string buff;
-    ++column;
-    sym = input.get();
-    while (!input.eof() && std::isdigit(sym)) {
-      buff += sym;
-      ++column;
-      sym = input.get();
-    }
-    if (std::isalpha(sym) || std::ispunct(sym)) {
-      token = Token::UNDEFINED;
-      tag = Tag::CHARACTER;
-    }
-    int c = std::stoi(buff);
-    if (c < 256 && c >=  0) {
-      lexeme += c;
-      token = Token::LITERAL;
-      tag = Tag::CHARACTER;
-      return;
-    }
-    token = Token::UNDEFINED;
-    tag = Tag::CHARACTER;
-    return;
-  }
+void compiler::Scanner::readBin ( void ) {
   sym = input.get();
   ++column;
-  while (!input.eof()) {
-    if (sym == '\'') {
-      sym = input.get();
-      ++column;
-      if (sym != '\'')
-        break;
-      ++countAph;
-    }
-    lexeme += sym;
+  unsigned long long int sum = 0;
+  unsigned int count = 0;
+  std::string buff = "%";
+
+  while (!input.eof() && (sym == '0' || sym == '1')) {
+    buff += sym;
+    sum <<= 1;
+    sum += sym - '0';
     ++column;
     sym = input.get();
+  }
+  if (buff.length() == 1) {
+    lexeme = buff;
+    token = Token::UNDEFINED;
+    tag = Tag::UNDEFINED;
+    return;
+  }
+  if (!std::isspace(sym) && !std::ispunct(sym) || sym == '\'' || sym == '_' || std::isalnum(sym) || sym == '.') {
+    lexeme = buff;
+    lexeme += sym;
+    countAph = -1;
+    token = Token::UNDEFINED;
+    tag = Tag::UNDEFINED;
+    return;
+  }
+  lexeme = std::to_string(sum);
+  countAph = buff.length() - lexeme.length();
+
+  token = Token::LITERAL;
+  tag = Tag::INTEGER;
+}
+
+void compiler::Scanner::readHex ( void ) {
+  sym = input.get();
+  ++column;
+  unsigned long long int sum = 0;
+  unsigned int count = 0;
+  std::string buff = "$";
+
+  while (!input.eof() && (std::isdigit(sym) || (std::toupper(sym) >= 'A' && std::toupper(sym) <= 'F'))) {
+    buff += sym;
+    sum <<= 4;
+    if (std::isdigit(sym))
+      sum += sym - '0';
+    else
+      sum += std::toupper(sym) - 'A' + 10;
+    ++column;
+    sym = input.get();
+  }
+  if (buff.length() == 1) {
+    lexeme = buff;
+    // countAph = -1;
+    token = Token::UNDEFINED;
+    tag = Tag::UNDEFINED;
+    return;
+  }
+  if (!std::isspace(sym) && !std::ispunct(sym) || sym == '\'' || sym == '_' || std::isalpha(sym) || sym == '.') {
+    lexeme = buff;
+    lexeme += sym;
+    countAph = -1;
+    token = Token::UNDEFINED;
+    tag = Tag::UNDEFINED;
+    return;
+  }
+  lexeme = std::to_string(sum);
+  countAph = buff.length() - lexeme.length();
+
+  token = Token::LITERAL;
+  tag = Tag::INTEGER;
+}
+
+void compiler::Scanner::readString( void ) {
+  int buff_char = 0;
+  while (sym == '#' || sym == '\'') {
+    if (sym == '#') { //ASCII
+      std::string buff;
+      sym = input.get();
+      ++column;
+      if (!std::isdigit(sym)) {
+        lexeme += '#';
+        token = Token::UNDEFINED;
+        tag = Tag::UNDEFINED;
+        return;
+      }
+      while (!input.eof() && std::isdigit(sym)) {
+        buff += sym;
+        ++column;
+        sym = input.get();
+      }
+      int c = std::stoi(buff);
+      if (c >= 256 || c <  0) {
+        token = Token::UNDEFINED;
+        tag = Tag::UNDEFINED;
+        return;
+      }
+      countAph += buff.length();
+      lexeme += c;
+    } else {
+      buff_char = sym;
+      sym = input.get();
+      ++column;
+      while (!input.eof()) {
+        if (sym == '\'') {
+          buff_char = sym;
+          sym = input.get();
+          ++column;
+          if (sym != '\'') {
+            countAph+=2;
+            break;
+          }
+          ++countAph;
+        }
+        lexeme += sym;
+        buff_char = sym;
+        ++column;
+        sym = input.get();
+      }
+      if (input.eof() && buff_char != '\'') {
+        countAph += 1;
+        token = Token::UNDEFINED;
+        tag = Tag::UNDEFINED;
+        return;
+      }
+    }
   }
 
   token = Token::LITERAL;
-
-  if (!lexeme.length()) {
-    token = Token::UNDEFINED;
-    tag = Tag::CHARACTER;
-  }
-  if (lexeme.length() == 1)
-    tag = Tag::CHARACTER;
-  else
-    tag = Tag::STRING;
+  tag = Tag::STRING;
 }
 
-void Scanner::readPunct ( void ) {
+void compiler::Scanner::readPunct ( void ) {
   lexeme += sym;
   if ( accDot && sym == '.') {
     accDot = false;
@@ -283,8 +340,11 @@ void Scanner::readPunct ( void ) {
   }
   auto iter = book.find(lexeme);
   if (iter == book.end()) {
-    token = Token::PUNCTUATION;
+    ++column;
+    sym = input.get();
+    token = Token::UNDEFINED;
     tag = Tag::UNDEFINED;
+    return;
   }
   if (sym == '.') {
     ++column;
@@ -360,7 +420,30 @@ void Scanner::readPunct ( void ) {
   sym = input.get();
 };
 
-void Scanner::initMap ( void ) {
+std::string compiler::Lexeme::tokenName () const {
+  switch (token) {
+    case (compiler::Token::END_OF_FILE) : return "END_OF_FILE";
+    case (compiler::Token::IDENTIFICATOR) : return "IDENTIFICATOR";
+    case (compiler::Token::LITERAL) : return "LITERAL";
+    case (compiler::Token::PUNCTUATION) : return "PUNCTUATION";
+    case (compiler::Token::OPERATOR) : return "OPERATOR";
+    case (compiler::Token::SPACE) : return "SPACE";
+    // case (compiler::Token::DIRECTIVE) : return "DIRECTIVE";
+  };
+  return "UNDEFINED";
+};
+
+compiler::Lexeme compiler::Scanner::lex ( void ) const {
+  compiler::Lexeme res;
+  res.column = column - lexeme.length() - countAph;
+  res.row = row;
+  res.tag = tag;
+  res.token = token;
+  res.name = lexeme;
+  return res;
+};
+
+void compiler::Scanner::initMap ( void ) {
   book["ABSOLUTE"] = std::make_pair(Token::IDENTIFICATOR, Tag::ABSOLUTE);
   book["ABSTRACT"] = std::make_pair(Token::IDENTIFICATOR, Tag::ABSTRACT);
   book["ARRAY"] = std::make_pair(Token::IDENTIFICATOR, Tag::ARRAY);
@@ -368,8 +451,8 @@ void Scanner::initMap ( void ) {
   book["ASM"] = std::make_pair(Token::IDENTIFICATOR, Tag::ASM);
   book["BEGIN"] = std::make_pair(Token::IDENTIFICATOR, Tag::BEGIN);
   book["BREAK"] = std::make_pair(Token::IDENTIFICATOR, Tag::BREAK);
-  book["B_FALSE"] = std::make_pair(Token::IDENTIFICATOR, Tag::B_FALSE);
-  book["B_TRUE"] = std::make_pair(Token::IDENTIFICATOR, Tag::B_TRUE);
+  book["FALSE"] = std::make_pair(Token::IDENTIFICATOR, Tag::B_FALSE);
+  book["TRUE"] = std::make_pair(Token::IDENTIFICATOR, Tag::B_TRUE);
   book["CASE"] = std::make_pair(Token::IDENTIFICATOR, Tag::CASE);
   book["CLASS"] = std::make_pair(Token::IDENTIFICATOR, Tag::CLASS);
   book["CONST"] = std::make_pair(Token::IDENTIFICATOR, Tag::CONST);
@@ -475,8 +558,8 @@ void Scanner::initMap ( void ) {
 
   book["["] = std::make_pair(Token::PUNCTUATION, Tag::LEFT_BRACE);       // -- '['
   book["]"] = std::make_pair(Token::PUNCTUATION, Tag::RIGHT_BRACE);      // -- ']'
-  book["{"] = std::make_pair(Token::PUNCTUATION, Tag::LEFT_PARENTHESE);  // -- '{'
-  book["}"] = std::make_pair(Token::PUNCTUATION, Tag::RIGHT_PARENTHESE); // -- '}'
+  // book["{"] = std::make_pair(Token::PUNCTUATION, Tag::LEFT_PARENTHESE);  // -- '{'
+  // book["}"] = std::make_pair(Token::PUNCTUATION, Tag::RIGHT_PARENTHESE); // -- '}'
   book["("] = std::make_pair(Token::PUNCTUATION, Tag::LEFT_BRACKET);     // -- '('
   book[")"] = std::make_pair(Token::PUNCTUATION, Tag::RIGHT_BRACKET);    // -- ')'
   book[","] = std::make_pair(Token::PUNCTUATION, Tag::COMMA);            // -- ','
