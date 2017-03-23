@@ -1,5 +1,5 @@
 #include <iostream>
-#include "inc/Scanner.hpp"
+#include "../inc/Scanner.hpp"
 
 using namespace std;
 

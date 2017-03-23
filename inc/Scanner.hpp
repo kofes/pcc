@@ -174,6 +174,8 @@ enum class Tag : unsigned long int {
 };
 
 struct Lexeme {
+  Lexeme () {};
+  Lexeme ( const compiler::Lexeme& lex ) : name(lex.name), token(lex.token), tag(lex.tag), row(lex.row), column(lex.column) {};
   std::string tokenName () const;
   std::string name;
   compiler::Token token;
@@ -183,11 +185,11 @@ struct Lexeme {
 
 class Scanner {
 public:
-  Scanner () : token(Token::UNDEFINED), tag(Tag::UNDEFINED), row(0), column(0) {initMap();};
+  Scanner ( void ) : token(Token::UNDEFINED), tag(Tag::UNDEFINED), row(0), column(0) {initMap();};
   Scanner ( const std::string& filename );
   void open ( const std::string& filename );
-  void nextLex ();
-  compiler::Lexeme lex () const;
+  void nextLex ( void );
+  compiler::Lexeme lex ( void ) const;
 private:
   void initMap ( void );
   void readId ( void );

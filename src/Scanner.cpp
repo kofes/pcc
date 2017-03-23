@@ -19,7 +19,7 @@ void compiler::Scanner::open ( const std::string& filename ) {
   lexeme.clear();
 };
 
-void compiler::Scanner::nextLex () {
+void compiler::Scanner::nextLex ( void ) {
   if (!input.is_open())
     return;
 
@@ -420,7 +420,7 @@ void compiler::Scanner::readPunct ( void ) {
   sym = input.get();
 };
 
-std::string compiler::Lexeme::tokenName () const {
+std::string compiler::Lexeme::tokenName ( void ) const {
   switch (token) {
     case (compiler::Token::END_OF_FILE) : return "END_OF_FILE";
     case (compiler::Token::IDENTIFICATOR) : return "IDENTIFICATOR";
