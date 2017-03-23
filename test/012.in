@@ -1,2 +1,0 @@
-function foo(it1, it2 : integer);
-procedure bar(it1, it2 : byte);
