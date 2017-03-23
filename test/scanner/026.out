@@ -1,0 +1,3 @@
+1:1	LITERAL	106	testing escape '\n', 'space', '\t':
+string at new line |	string separated by tab| string separated by space
+2:1	END_OF_FILE	0	
