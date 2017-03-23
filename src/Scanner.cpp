@@ -1,4 +1,5 @@
 #include "../inc/Scanner.hpp"
+#include <iostream>
 
 compiler::Scanner::Scanner ( const std::string& filename ) {
   input.open(filename);
@@ -183,7 +184,7 @@ void compiler::Scanner::readDec ( void ) {
       tag = Tag::UNDEFINED;
       return;
     }
-  if (!std::isspace(sym) && !std::ispunct(sym) || sym == '\'' || sym == '_') {
+  if (sym == '\'' || sym == '_') {
     lexeme += sym;
     token = Token::UNDEFINED;
     tag = Tag::UNDEFINED;
@@ -215,7 +216,7 @@ void compiler::Scanner::readBin ( void ) {
     tag = Tag::UNDEFINED;
     return;
   }
-  if (!std::isspace(sym) && !std::ispunct(sym) || sym == '\'' || sym == '_' || std::isalnum(sym) || sym == '.') {
+  if (sym == '\'' || sym == '_' || std::isalnum(sym) || sym == '.') {
     lexeme = buff;
     lexeme += sym;
     countAph = -1;
@@ -254,7 +255,7 @@ void compiler::Scanner::readHex ( void ) {
     tag = Tag::UNDEFINED;
     return;
   }
-  if (!std::isspace(sym) && !std::ispunct(sym) || sym == '\'' || sym == '_' || std::isalpha(sym) || sym == '.') {
+  if (sym == '\'' || sym == '_' || std::isalpha(sym) || sym == '.') {
     lexeme = buff;
     lexeme += sym;
     countAph = -1;
