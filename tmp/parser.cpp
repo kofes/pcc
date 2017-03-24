@@ -12,7 +12,7 @@ int main (int argc, char* argv[]) {
     parser.set("test.pas");
   try {
     parser.parse();
-    cout << parser.print() << endl;
+    cout << parser.print();
   } catch (std::exception& ex) {
     cout << ex.what() << endl;
   }
