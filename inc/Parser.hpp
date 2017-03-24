@@ -9,8 +9,8 @@
 #include "Expr.hpp"
 
 struct ExprException : public std::exception {
-  ExprException() : err("Illegal expression") {};
-  ExprException(const std::string& str) : err(str) {};
+  ExprException ( void ) : err("Illegal expression") {};
+  ExprException ( const std::string& str ) : err(str) {};
   const char* what() const noexcept {return err.c_str();};
 private:
   std::string err;
@@ -39,10 +39,11 @@ private:
 
   bool isUnary ( const compiler::Tag& tag );
 
-  void checkParenthesis ( const compiler::Lexeme& lex );
+  void err ( const std::string& expected_token = "" );//UNEXPECTED <- EXPECTED || EOF
+  void err ( const compiler::Lexeme& lexeme );
 
   compiler::pExpr parseExpr ( const compiler::Priority& priority );
-  compiler::pExpr parseTerm ( void );
+  compiler::pExpr parseIdentifier ( compiler::Lexeme lexeme );
   compiler::pExpr parseFactor ( void );
 
   std::vector<compiler::pExpr> parseArrayIndex ( void );

@@ -14,8 +14,8 @@ void compiler::Parser::set ( const std::string& filename ) {
 
 void compiler::Parser::parse ( void ) {
   scanner.nextLex();
-  checkParenthesis (scanner.lex());
   root = parseExpr(compiler::Priority::LOWEST);
+  if (scanner.lex().token != compiler::Token::END_OF_FILE) err(scanner.lex());
 };
 
 compiler::pExpr compiler::Parser::parseExpr ( const compiler::Priority& priority ) {
@@ -25,7 +25,6 @@ compiler::pExpr compiler::Parser::parseExpr ( const compiler::Priority& priority
   compiler::Lexeme lexeme = scanner.lex();
   while (checkPriority(priority, lexeme.tag)) {
     scanner.nextLex();
-    checkParenthesis (scanner.lex());
     compiler::pExpr right = parseExpr(upPriority(priority));
     left = compiler::pExpr(new compiler::ExprBinOp(lexeme, left, right));
     lexeme = scanner.lex();
@@ -36,68 +35,59 @@ compiler::pExpr compiler::Parser::parseExpr ( const compiler::Priority& priority
 compiler::pExpr compiler::Parser::parseFactor ( void ) {
   compiler::pExpr tmpExpr;
   compiler::Lexeme lexeme = scanner.lex();
-
-  if (lexeme.token == compiler::Token::IDENTIFICATOR &&
-    lexeme.tag == compiler::Tag::UNDEFINED)
-    return parseTerm();
-
   scanner.nextLex();
-  checkParenthesis (scanner.lex());
 
-  if (scanner.lex().tag == compiler::Tag::LEFT_BRACE && (lexeme.token != compiler::Token::IDENTIFICATOR))
-    throw ExprException("Unexpected expression: \'[\' in pos (" + std::to_string(scanner.lex().row) + ", " + std::to_string(scanner.lex().column) + ");");
+  if (lexeme.token == compiler::Token::IDENTIFIER && lexeme.tag == compiler::Tag::UNDEFINED)
+    return parseIdentifier(lexeme);
+  if (isUnary(lexeme.tag))
+    return compiler::pExpr(new ExprUnOp(lexeme, parseExpr(Priority::HIGHEST)));
 
-  if (isUnary(lexeme.tag)) return compiler::pExpr(new ExprUnOp(lexeme, parseExpr(Priority::HIGHEST)));
-  if (lexeme.tag == compiler::Tag::INTEGER) return compiler::pExpr(new ExprInteger(lexeme));
-  if (lexeme.tag == compiler::Tag::FLOAT) return compiler::pExpr(new ExprReal(lexeme));
-
-  if (lexeme.tag == compiler::Tag::LEFT_BRACKET) {
-    tmpExpr = parseExpr(compiler::Priority::LOWEST);
-    if (scanner.lex().tag != compiler::Tag::RIGHT_BRACKET) {
+  switch (lexeme.tag) {
+    case (compiler::Tag::INTEGER) : return compiler::pExpr(new ExprInteger(lexeme));
+    case (compiler::Tag::FLOAT) : return compiler::pExpr(new ExprReal(lexeme));
+    case (compiler::Tag::LEFT_PARENTHESIS) :
+      tmpExpr = parseExpr(compiler::Priority::LOWEST);
       lexeme = scanner.lex();
-      if (lexeme.token == compiler::Token::END_OF_FILE)
-        throw ExprException("Unexpected end of file: in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
-      throw ExprException("Unexpected expression: \'" + lexeme.name + "\' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + "); expected \')\';");
-    }
-    scanner.nextLex();
-    checkParenthesis (scanner.lex());
+
+      if (lexeme.tag != compiler::Tag::RIGHT_PARENTHESIS) {
+        if (lexeme.token == compiler::Token::END_OF_FILE) err();
+        err(")");
+      }
+
+      scanner.nextLex();
     return tmpExpr;
   }
-  if (lexeme.token == compiler::Token::END_OF_FILE)
-      throw ExprException("Unexpected end of file: in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
 
-  throw ExprException("Illegal expression: \'" + lexeme.name + "\' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
+  if (lexeme.token == compiler::Token::END_OF_FILE) err();
+  err(lexeme);
 };
 
-compiler::pExpr compiler::Parser::parseTerm ( void ) {
-  compiler::Lexeme lexeme = scanner.lex();
+compiler::pExpr compiler::Parser::parseIdentifier ( compiler::Lexeme lexeme ) {
   compiler::pExpr left = compiler::pExpr(new ExprIdentifier(lexeme));
+
   while (true) {
-    compiler::Lexeme tmpLex;
-    scanner.nextLex();
-    checkParenthesis (scanner.lex());
     lexeme = scanner.lex();
     if (lexeme.tag == compiler::Tag::DOT) {
-      tmpLex = lexeme;
+      compiler::Lexeme tmpLex = lexeme;
       scanner.nextLex();
-      checkParenthesis (scanner.lex());
       lexeme = scanner.lex();
-      if (lexeme.token == compiler::Token::END_OF_FILE)
-          throw ExprException("Unexpected end of file: in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
-      if (lexeme.token != compiler::Token::IDENTIFICATOR || lexeme.tag != compiler::Tag::UNDEFINED)
-        throw ExprException("Illegal expression: \'" + lexeme.name + "\' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + "); expected \'IDENTIFICATOR\';");
+
+      if (lexeme.token == compiler::Token::END_OF_FILE) err();
+      if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED) err("IDENTIFIER");
+
       compiler::pExpr right = compiler::pExpr(new ExprIdentifier(lexeme));
       left = compiler::pExpr(new ExprRecordAccess(tmpLex, left, right));
-    } else if (lexeme.tag == compiler::Tag::LEFT_BRACE) {
-      tmpLex = lexeme;
+    } else if (lexeme.tag == compiler::Tag::LEFT_BRACKET) {
+      compiler::Lexeme tmpLex = lexeme;
       std::vector< compiler::pExpr > args = parseArrayIndex();
       left = compiler::pExpr(new ExprArrayIndex(tmpLex, left, args));
       lexeme = scanner.lex();
-      if (lexeme.token == compiler::Token::END_OF_FILE)
-          throw ExprException("Unexpected end of file: in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
-      if (lexeme.tag != compiler::Tag::RIGHT_BRACE)
-        throw ExprException("Illegal expresssion: \'" + lexeme.name + "\' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + "); expected \']\';");
+
+      if (lexeme.token == compiler::Token::END_OF_FILE) err();
+      if (lexeme.tag != compiler::Tag::RIGHT_BRACKET) err("]");
+
     } else break;
+    scanner.nextLex();
   }
   return left;
 };
@@ -113,12 +103,10 @@ std::vector<compiler::pExpr> compiler::Parser::parseArrayIndex ( void ) {
   std::vector<compiler::pExpr> expr;
   compiler::Lexeme lexeme;
   scanner.nextLex();
-  checkParenthesis (scanner.lex());
   expr.push_back(parseExpr(compiler::Priority::LOWEST));
   lexeme = scanner.lex();
   while (lexeme.tag == compiler::Tag::COMMA) {
     scanner.nextLex();
-    checkParenthesis (scanner.lex());
     expr.push_back(parseExpr(compiler::Priority::LOWEST));
     lexeme = scanner.lex();
   }
@@ -140,14 +128,15 @@ bool compiler::Parser::isUnary ( const compiler::Tag& tag ) {
   return unaryPriority.find(tag) != unaryPriority.end();
 };
 
-void compiler::Parser::checkParenthesis ( const compiler::Lexeme& lex ) {
-  if (lex.tag == compiler::Tag::LEFT_BRACE) ++diffBrace;
-  if (lex.tag == compiler::Tag::RIGHT_BRACE) --diffBrace;
-  if (lex.tag == compiler::Tag::LEFT_BRACKET) ++diffBracket;
-  if (lex.tag == compiler::Tag::RIGHT_BRACKET) --diffBracket;
+void compiler::Parser::err ( const std::string& expected_token ) {
+  compiler::Lexeme lexeme = scanner.lex();
+  if (expected_token == "")
+    throw ExprException("Unexpected end of file in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
+  throw ExprException("Unexpected token '" + lexeme.name + "' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + "); expected '" + expected_token + "';");
+};
 
-  if (diffBracket < 0 || diffBrace < 0)
-    throw ExprException("Unexpected parenth': \'" + lex.name + "\' in pos (" + std::to_string(lex.row) + ", " + std::to_string(lex.column) + ");");
+void compiler::Parser::err ( const compiler::Lexeme& lexeme ) {
+  throw ExprException("Unexpected token '" + lexeme.name + "' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
 };
 
 void compiler::Parser::setPriorities ( void ) {
