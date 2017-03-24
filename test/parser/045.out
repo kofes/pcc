@@ -1,1 +1,1 @@
-Illegal expression: ']' in pos (1, 10);
+Unexpected token ']' in pos (1, 10);
