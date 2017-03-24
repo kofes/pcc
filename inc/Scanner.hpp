@@ -11,7 +11,7 @@ namespace compiler {
 enum class Token : unsigned short {
   UNDEFINED = 0,
   END_OF_FILE = 1,
-  IDENTIFICATOR = 2,
+  IDENTIFIER = 2,
   LITERAL = 3,
   PUNCTUATION = 4,
   OPERATOR = 5,
