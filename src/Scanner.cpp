@@ -101,7 +101,7 @@ void compiler::Scanner::nextLex ( void ) {
         }
         lexeme += '(';
         token = Token::PUNCTUATION;
-        tag = Tag::LEFT_BRACKET;
+        tag = Tag::LEFT_PARENTHESIS;
         return;
       }
       if (sym == '/') {
@@ -557,12 +557,10 @@ void compiler::Scanner::initMap ( void ) {
 
   book["NIL"] = std::make_pair(Token::LITERAL, Tag::NIL);
 
-  book["["] = std::make_pair(Token::PUNCTUATION, Tag::LEFT_BRACE);       // -- '['
-  book["]"] = std::make_pair(Token::PUNCTUATION, Tag::RIGHT_BRACE);      // -- ']'
-  // book["{"] = std::make_pair(Token::PUNCTUATION, Tag::LEFT_PARENTHESE);  // -- '{'
-  // book["}"] = std::make_pair(Token::PUNCTUATION, Tag::RIGHT_PARENTHESE); // -- '}'
-  book["("] = std::make_pair(Token::PUNCTUATION, Tag::LEFT_BRACKET);     // -- '('
-  book[")"] = std::make_pair(Token::PUNCTUATION, Tag::RIGHT_BRACKET);    // -- ')'
+  book["["] = std::make_pair(Token::PUNCTUATION, Tag::LEFT_BRACKET);       // -- '['
+  book["]"] = std::make_pair(Token::PUNCTUATION, Tag::RIGHT_BRACKET);      // -- ']'
+  book["("] = std::make_pair(Token::PUNCTUATION, Tag::LEFT_PARENTHESIS);     // -- '('
+  book[")"] = std::make_pair(Token::PUNCTUATION, Tag::RIGHT_PARENTHESIS);    // -- ')'
   book[","] = std::make_pair(Token::PUNCTUATION, Tag::COMMA);            // -- ','
   book[":"] = std::make_pair(Token::PUNCTUATION, Tag::COLON);            // -- ':'
   book["."] = std::make_pair(Token::PUNCTUATION, Tag::DOT);              // -- '.'

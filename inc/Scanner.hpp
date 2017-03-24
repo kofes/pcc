@@ -135,10 +135,10 @@ enum class Tag : unsigned long int {
   CHARACTER,       // -- 'a', 'b', ...
   INTEGER,     // -- '1234567890'
 
-  LEFT_BRACE,      // -- '['
-  RIGHT_BRACE,     // -- ']'
-  LEFT_BRACKET,    // -- '('
-  RIGHT_BRACKET,   // -- ')'
+  LEFT_BRACKET,      // -- '['
+  RIGHT_BRACKET,     // -- ']'
+  LEFT_PARENTHESIS,    // -- '('
+  RIGHT_PARENTHESIS,   // -- ')'
   COMMA,           // -- ','
   COLON,           // -- ':'
   DOT,             // -- '.'
