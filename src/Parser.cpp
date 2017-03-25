@@ -1,4 +1,4 @@
-#include "../inc/Parser.hpp"
+#include "Parser.hpp"
 
 compiler::Parser::Parser ( void ) {
   setPriorities();
@@ -56,10 +56,12 @@ compiler::pExpr compiler::Parser::parseFactor ( void ) {
 
       scanner.nextLex();
     return tmpExpr;
+    default: break;
   }
 
   if (lexeme.token == compiler::Token::END_OF_FILE) err();
   err(lexeme);
+  return compiler::pExpr(new Expr(lexeme));
 };
 
 compiler::pExpr compiler::Parser::parseIdentifier ( compiler::Lexeme lexeme ) {

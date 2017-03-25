@@ -1,4 +1,4 @@
-#include "../inc/Expr.hpp"
+#include "Expr.hpp"
 
 std::string compiler::Expr::print ( unsigned int deep ) {
   std::ostringstream sstream;

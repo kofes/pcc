@@ -1,5 +1,4 @@
-#include "../inc/Scanner.hpp"
-#include <iostream>
+#include "Scanner.hpp"
 
 compiler::Scanner::Scanner ( const std::string& filename ) {
   input.open(filename);
@@ -172,7 +171,7 @@ void compiler::Scanner::readDec ( void ) {
     ++column;
     sym = input.get();
   }
-  if (countDots == 2)
+  if (countDots == 2) {
     if (lexeme[lexeme.length() - 1] == '.') {
       accDot = true;
       --column;
@@ -184,6 +183,7 @@ void compiler::Scanner::readDec ( void ) {
       tag = Tag::UNDEFINED;
       return;
     }
+  }
   if (sym == '\'' || sym == '_') {
     lexeme += sym;
     token = Token::UNDEFINED;
@@ -200,7 +200,6 @@ void compiler::Scanner::readBin ( void ) {
   sym = input.get();
   ++column;
   unsigned long long int sum = 0;
-  unsigned int count = 0;
   std::string buff = "%";
 
   while (!input.eof() && (sym == '0' || sym == '1')) {
@@ -235,7 +234,6 @@ void compiler::Scanner::readHex ( void ) {
   sym = input.get();
   ++column;
   unsigned long long int sum = 0;
-  unsigned int count = 0;
   std::string buff = "$";
 
   while (!input.eof() && (std::isdigit(sym) || (std::toupper(sym) >= 'A' && std::toupper(sym) <= 'F'))) {
@@ -430,6 +428,7 @@ std::string compiler::Lexeme::tokenName ( void ) const {
     case (compiler::Token::OPERATOR) : return "OPERATOR";
     case (compiler::Token::SPACE) : return "SPACE";
     // case (compiler::Token::DIRECTIVE) : return "DIRECTIVE";
+    default: break;
   };
   return "UNDEFINED";
 };
