@@ -67,26 +67,32 @@ compiler::pExpr compiler::Parser::parseIdentifier ( compiler::Lexeme lexeme ) {
 
   while (true) {
     lexeme = scanner.lex();
-    if (lexeme.tag == compiler::Tag::DOT) {
-      compiler::Lexeme tmpLex = lexeme;
-      scanner.nextLex();
-      lexeme = scanner.lex();
-
-      if (lexeme.token == compiler::Token::END_OF_FILE) err();
-      if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED) err("IDENTIFIER");
-
-      compiler::pExpr right = compiler::pExpr(new ExprIdentifier(lexeme));
-      left = compiler::pExpr(new ExprRecordAccess(tmpLex, left, right));
-    } else if (lexeme.tag == compiler::Tag::LEFT_BRACKET) {
-      compiler::Lexeme tmpLex = lexeme;
-      std::vector< compiler::pExpr > args = parseArrayIndex();
-      left = compiler::pExpr(new ExprArrayIndex(tmpLex, left, args));
-      lexeme = scanner.lex();
-
-      if (lexeme.token == compiler::Token::END_OF_FILE) err();
-      if (lexeme.tag != compiler::Tag::RIGHT_BRACKET) err("]");
-
-    } else break;
+    compiler::Lexeme tmpLex;
+    std::vector< compiler::pExpr > args;
+    compiler::pExpr right;
+    switch (lexeme.tag) {
+      case (compiler::Tag::DOT):
+        tmpLex = lexeme;
+        scanner.nextLex();
+        lexeme = scanner.lex();
+        if (lexeme.token == compiler::Token::END_OF_FILE) err();
+        if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED) err("IDENTIFIER");
+        right = compiler::pExpr(new ExprIdentifier(lexeme));
+        left = compiler::pExpr(new ExprRecordAccess(tmpLex, left, right));
+      break;
+      case (compiler::Tag::LEFT_BRACKET):
+        tmpLex = lexeme;
+        args = parseArrayIndex();
+        left = compiler::pExpr(new ExprArrayIndex(tmpLex, left, args));
+        lexeme = scanner.lex();
+        if (lexeme.token == compiler::Token::END_OF_FILE) err();
+        if (lexeme.tag != compiler::Tag::RIGHT_BRACKET) err("]");
+      break;
+      case (compiler::Tag::POINTER):
+        left = compiler::pExpr(new ExprUnOp(lexeme, left));
+      break;
+      default: return left;
+    }
     scanner.nextLex();
   }
   return left;
