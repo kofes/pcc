@@ -8,11 +8,19 @@
 
 namespace compiler {
 
-enum GLOB {
-  PARAMS,
-  CONST,
-  LOCAL,
-  GLOBAL
+enum class GLOB : char {
+  PARAM = 'P',
+  CONST = 'C',
+  LOCAL = 'L',
+  GLOBAL = 'G'
+};
+
+enum class SCALAR_TYPE : unsigned long int {
+  POINTER = static_cast<unsigned long int>(Tag::POINTER),
+  BOOLEAN = static_cast<unsigned long int>(Tag::BOOLEAN),
+  CHAR = static_cast<unsigned long int>(Tag::CHAR),
+  INTEGER = static_cast<unsigned long int>(Tag::INTEGER),
+  REAL = static_cast<unsigned long int>(Tag::REAL)
 };
 
 struct Sym;
@@ -26,16 +34,14 @@ typedef std::shared_ptr<TypeTable> pTypeTable;
 
 struct Sym : public Node {
   Sym ( const Lexeme& lex ) : Node(lex) {};
-  // virtual std::string print ( unsigned int deep );
 };
 
 struct SymType : public Sym {
   SymType ( const Lexeme& lex ) : Sym(lex) {};
-  // std::string print ( unsigned int deep ) override;
 };
 //TOKEN: IDENTIFIER, TAG: UNDEF
 struct SymVar : public Sym {
-  SymVar ( const Lexeme& lex, const pSym& st ) : Sym(lex), type(st) {};
+  SymVar ( const Lexeme& lex ) : Sym(lex) {};
   std::string print ( unsigned int deep ) override;
   pSym type;
   GLOB glob;
@@ -52,6 +58,7 @@ struct SymFunc : public Sym {
 //NIL, INTEGER, REAL, CHAR, BOOLEAN
 struct TypeScalar : public SymType {
   TypeScalar ( const Lexeme& lex ) : SymType(lex) {};
+  TypeScalar ( SCALAR_TYPE tp );
 };
 //ARRAY: <low>...<high> of <elemType>
 struct TypeArray : public SymType {

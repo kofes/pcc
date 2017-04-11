@@ -37,6 +37,7 @@ public:
   std::string print ( void );
 private:
   void setPriorities ( void );
+  void setTypeTable ( void );
   Priority upPriority ( const Priority& pr );
   bool checkPriority ( const Priority& pr, const Tag& tag );
 
@@ -44,6 +45,8 @@ private:
 
   void err ( const std::string& expected_token = "" );//UNEXPECTED <- EXPECTED || EOF
   void err ( const Lexeme& lexeme );
+  void errUndefType ( void );
+  void errDuplicated ( void );
 
   pExpr parseExpr ( const Priority& priority );
   pExpr parseIdentifier ( Lexeme lexeme );
@@ -74,9 +77,11 @@ private:
   Scanner scanner;
   pNode root;//for all!(stmts and exprs)
 
-  SymTable baseVar;
-  TypeTable baseType;
+  SymTable varTable;
+  TypeTable typeTable;
+  //first: nameFunc; second: descriptor of function/procedure;
+  std::map<std::string, pSym> function;
 
-  bool programTokenChecked, varTokenChecked;
+  bool programTokenChecked;
 };
 };

@@ -1,11 +1,15 @@
 #include "Parser.hpp"
+//TODO: RM iostream!
+#include <iostream>
 
 compiler::Parser::Parser ( void ) {
   setPriorities();
+  setTypeTable();
 };
 
 compiler::Parser::Parser ( const std::string& filename ) : scanner(filename) {
   setPriorities();
+  setTypeTable();
 };
 
 void compiler::Parser::set ( const std::string& filename ) {
@@ -18,18 +22,18 @@ void compiler::Parser::parseExpr ( void ) {
 };
 
 void compiler::Parser::parse ( void ) {
-  programTokenChecked = varTokenChecked = false;
+  programTokenChecked = false;
   scanner.nextLex();
   while (true) {
     switch (scanner.lex().tag) {
       case (compiler::Tag::PROGRAM) : programTokenChecked ? err(scanner.lex()) : parseProgramName(); break;//Only one!
       case (compiler::Tag::TYPE) : parseType(); break;
       case (compiler::Tag::CONST) : parseConst(); break;
-      case (compiler::Tag::VAR) : varTokenChecked ? err(scanner.lex()) : parseVar(); break;//Only one!
+      case (compiler::Tag::VAR) : parseVar(); break;//Only one!
       case (compiler::Tag::FUNCTION) : parseFunction(); break;
       case (compiler::Tag::PROCEDURE) : parseProcedure(); break;
       case (compiler::Tag::BEGIN) : root = parseBlock(); return;
-      default : err(scanner.lex());
+      default : err("BEGIN STATEMENT");
     }
     programTokenChecked = true;
   }
@@ -62,7 +66,7 @@ void compiler::Parser::parseProgramName ( void ){
   if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
     err("PROGRAM NAME");
   else
-    baseVar[lexeme.name] = std::shared_ptr<compiler::SymType>(new SymType(programName));
+    varTable[lexeme.name] = std::shared_ptr<compiler::SymType>(new SymType(programName));
   scanner.nextLex();
   lexeme = scanner.lex();
   if (lexeme.tag != compiler::Tag::SEMICOLON)
@@ -71,7 +75,63 @@ void compiler::Parser::parseProgramName ( void ){
 };
 
 void compiler::Parser::parseConst ( void ){};
-void compiler::Parser::parseVar ( void ){};
+
+void compiler::Parser::parseVar ( void ) {
+
+  scanner.nextLex();
+  compiler::Lexeme lexeme = scanner.lex();
+
+  if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
+    err("IDENTIFIER");
+
+  for (;lexeme.token == compiler::Token::IDENTIFIER && lexeme.tag == compiler::Tag::UNDEFINED;
+       scanner.nextLex(), lexeme = scanner.lex()) {
+
+    if (varTable.find(lexeme.name) != varTable.end())
+      errDuplicated();
+
+    std::vector< std::shared_ptr<SymVar> > var;
+
+    var.push_back(std::shared_ptr<SymVar>(new SymVar(lexeme)));
+    var.back()->glob = compiler::GLOB::GLOBAL;
+    scanner.nextLex();
+    lexeme = scanner.lex();
+
+    for (;lexeme.tag == compiler::Tag::COMMA; scanner.nextLex(), lexeme = scanner.lex()) {
+      scanner.nextLex();
+      lexeme = scanner.lex();
+
+      if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
+        err("IDENTIFIER");
+
+      if (varTable.find(lexeme.name) != varTable.end())
+        errDuplicated();
+
+      var.push_back(std::shared_ptr<SymVar>(new SymVar(lexeme)));
+      var.back()->glob = compiler::GLOB::GLOBAL;
+    }
+
+    if (lexeme.tag != compiler::Tag::COLON)
+      err("':'");
+
+    scanner.nextLex();
+    lexeme = scanner.lex();
+
+    auto iter = typeTable.find(lexeme.name);
+    if (iter == typeTable.end())
+      errUndefType();
+
+    for (auto elem : var)
+      varTable[elem->name] = iter->second;
+
+    scanner.nextLex();
+    lexeme = scanner.lex();
+
+    if (lexeme.tag != compiler::Tag::SEMICOLON)
+      err("';'");
+  };
+};
+
 void compiler::Parser::parseFunction ( void ){};
 void compiler::Parser::parseProcedure ( void ){};
 void compiler::Parser::parseType ( void ){};
@@ -160,7 +220,7 @@ compiler::pExpr compiler::Parser::parseIdentifier ( compiler::Lexeme lexeme ) {
 
 std::string compiler::Parser::print ( void ) {
 
-  if (scanner.lex().tag != compiler::Tag::DOT && scanner.lex().token != compiler::Token::END_OF_FILE) err(scanner.lex());//Program's end is 'end.'
+  if (scanner.lex().token != compiler::Token::END_OF_FILE) err(scanner.lex());//Program's end is 'end.'
 
   std::ostringstream out;
   out << root->print(0);
@@ -200,6 +260,8 @@ void compiler::Parser::err ( const std::string& expected_token ) {
   compiler::Lexeme lexeme = scanner.lex();
   if (expected_token == "")
     throw ExprException("Unexpected end of file in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
+  if (lexeme.token == compiler::Token::END_OF_FILE)
+    throw ExprException("Unexpected end of file in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + "); expected '" + expected_token + "';");
   throw ExprException("Unexpected token '" + lexeme.name + "' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + "); expected '" + expected_token + "';");
 };
 
@@ -207,6 +269,18 @@ void compiler::Parser::err ( const compiler::Lexeme& lexeme ) {
   if (lexeme.token == compiler::Token::END_OF_FILE)
     throw ExprException("Unexpected end of file in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
   throw ExprException("Unexpected token '" + lexeme.name + "' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
+};
+
+void compiler::Parser::errUndefType ( void ) {
+  compiler::Lexeme lexeme = scanner.lex();
+  if (lexeme.token == compiler::Token::END_OF_FILE)
+    throw ExprException("Unexpected end of file in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + "); expected type name;");
+  throw ExprException("Undefined type '" + lexeme.name + "' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
+};
+
+void compiler::Parser::errDuplicated ( void ) {
+  compiler::Lexeme lexeme = scanner.lex();
+  throw ExprException("Duplicate identifier \"" + lexeme.name + "\" in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
 };
 
 void compiler::Parser::setPriorities ( void ) {
@@ -239,4 +313,12 @@ void compiler::Parser::setPriorities ( void ) {
     {compiler::Tag::ADD, compiler::Priority::HIGHEST},
     {compiler::Tag::ADDRESS, compiler::Priority::HIGHEST}
   };
+};
+
+void compiler::Parser::setTypeTable ( void ) {
+  typeTable[tagBook.at(compiler::Tag::POINTER)] = compiler::pSym(new TypeScalar(compiler::SCALAR_TYPE::POINTER));
+  typeTable[tagBook.at(compiler::Tag::INTEGER)] = compiler::pSym(new TypeScalar(compiler::SCALAR_TYPE::INTEGER));
+  typeTable[tagBook.at(compiler::Tag::REAL)] = compiler::pSym(new TypeScalar(compiler::SCALAR_TYPE::REAL));
+  typeTable[tagBook.at(compiler::Tag::CHAR)] = compiler::pSym(new TypeScalar(compiler::SCALAR_TYPE::CHAR));
+  typeTable[tagBook.at(compiler::Tag::BOOLEAN)] = compiler::pSym(new TypeScalar(compiler::SCALAR_TYPE::BOOLEAN));
 };
