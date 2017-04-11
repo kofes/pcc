@@ -24,9 +24,11 @@ enum class SCALAR_TYPE : unsigned long int {
 };
 
 struct Sym;
+struct SymVar;
 typedef std::shared_ptr<Sym> pSym;
-//first: varName; second: type descriptor
-typedef std::map< std::string, pSym > SymTable;
+typedef std::shared_ptr<Sym> pSymVar;
+//first: varName; second: descriptor of var
+typedef std::map< std::string, pSymVar > SymTable;
 //first: typeName; second: descriptor of type
 typedef std::map< std::string, pSym > TypeTable;
 typedef std::shared_ptr<SymTable> pSymTable;
@@ -45,12 +47,13 @@ struct SymVar : public Sym {
   std::string print ( unsigned int deep ) override;
   pSym type;
   GLOB glob;
+  std::string value;
 };
 //TAG: FUNC, NAME: funcName,
 struct SymFunc : public Sym {
   SymFunc ( const Lexeme& lex, const pSym& rt, const pSymTable& tbl, const pNode& bd ) : Sym(lex), retType(rt), symTable(tbl), body(bd) {};
   std::string print ( unsigned int deep ) override;
-  pSym retType;
+  pSymVar retType;
   pSymTable symTable;
   pTypeTable typeTable;
   pNode body;//begin->end;,... (like in GLOBAL!)
@@ -62,6 +65,7 @@ struct TypeScalar : public SymType {
 };
 //ARRAY: <low>...<high> of <elemType>
 struct TypeArray : public SymType {
+  TypeArray ( const Lexeme& lex ) : SymType(lex) {};
   TypeArray ( const Lexeme& lex, const pSym& eltype, unsigned long long lw, unsigned long long hgh ) : SymType(lex), elemType(eltype), low(lw), high(hgh) {};
   std::string print ( unsigned int deep ) override;
   pSym elemType;

@@ -27,7 +27,7 @@ void compiler::Parser::parse ( void ) {
   while (true) {
     switch (scanner.lex().tag) {
       case (compiler::Tag::PROGRAM) : programTokenChecked ? err(scanner.lex()) : parseProgramName(); break;
-      case (compiler::Tag::TYPE) : parseType(); break;
+      case (compiler::Tag::TYPE) : parseAlias(); break;
       case (compiler::Tag::CONST) : parseConst(); break;
       case (compiler::Tag::VAR) : parseVar(); break;
       case (compiler::Tag::FUNCTION) : parseFunction(); break;
@@ -59,14 +59,85 @@ compiler::pStmt compiler::Parser::parseFor ( void ){};
 compiler::pStmt compiler::Parser::parseEmpty ( void ){};
 compiler::pStmt compiler::Parser::parseBlock ( void ){};
 
+compiler::pSym compiler::Parser::parseType ( compiler::Lexeme& lexeme, bool eq ) {
+
+  switch (lexeme.tag) {
+    case (compiler::Tag::ARRAY) :
+      while (lexeme.tag == compiler::Tag::ARRAY) {
+        compiler::TypeArray vArray(lexeme);
+
+        scanner.nextLex();
+        lexeme = scanner.lex();
+        //ONLY STATIC ARRAY!
+        if (lexeme.tag != compiler::Tag::LEFT_BRACKET)
+          err("[");
+
+        scanner.nextLex();
+        lexeme = scanner.lex();
+        //LITERAL OR CONST_INTEGER!
+        auto iter = varTable.find(lexeme.name);
+        if (lexeme.token == compiler::Tag::LITERAL && lexeme.tag == compiler::Tag::INTEGER)
+          vArray.low = std::strtoll(lexeme.name.c_str(), nullptr, 10);
+        else if (iter != varTable.end() && iter.second->glob == compiler::GLOB::GLOBAL && iter.second->pSym->tag == INTEGER) {//TODO: CHECK CONST_INTEGER!
+          vArray.low = std::strtoll(iter.second->value.c_str(), nullptr, 10);//TEST VALUE!
+        } else
+          err("integer literal/const integer");
+
+        scanner.nextLex();
+        lexeme = scanner.lex();
+        if (lexeme.tag != compiler::Tag::DOUBLE_DOT)
+          err("..");
+
+        scanner.nextLex();
+        lexeme = scanner.lex();
+        //LITERAL OR CONST_INTEGER!
+        auto iter = varTable.find(lexeme.name);
+        if (lexeme.token == compiler::Tag::LITERAL && lexeme.tag == compiler::Tag::INTEGER)
+          vArray.high = std::strtoll(lexeme.name.c_str(), nullptr, 10);
+        else if (iter != varTable.end() && iter.second->glob == compiler::GLOB::GLOBAL && iter.second->pSym->tag == INTEGER) {//TODO: CHECK CONST_INTEGER!
+          vArray.high = std::strtoll(iter.second->value.c_str(), nullptr, 10);//TEST VALUE!
+        } else
+          err("integer literal/const integer");
+        if (vArray.high <= vArray.low)
+          throw ExprException("array 'high' <= 'low' in pos(" + std::to_string(vArray.row) + ", " + std::tostring(vArray.column) + ");");
+
+        scanner.nextLex();
+        lexeme = scanner.lex();
+        //ONLY STATIC ARRAY!
+        if (lexeme.tag != compiler::Tag::RIGHT_BRACKET)
+          err("]");
+
+        scanner.nextLex();
+        lexeme = scanner.lex();
+        if (lexeme.tag != compiler::Tag::OF)
+          err("of");
+
+        //TODO: CIRCLING 'ARRAY[...] OF' AND '[a..b,c..d,...,N..M]' - check!
+      }
+    break;
+    // case (compiler::Tag::RECORD) :
+    // break;
+    // case (compiler::Tag::SET) :
+    default :
+      auto iter = typeTable.find(lexeme.name);
+      if (iter == typeTable.end())
+        errUndefType();
+  }
+
+};
+
 void compiler::Parser::parseProgramName ( void ){
   compiler::Lexeme programName = scanner.lex();
   scanner.nextLex();
   compiler::Lexeme lexeme = scanner.lex();
   if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
     err("PROGRAM NAME");
-  else
-    varTable[lexeme.name] = std::shared_ptr<compiler::SymType>(new SymType(programName));
+  else {
+    std::shared_ptr<compiler::SymVar> var = std::shared_ptr<compiler::SymVar>(new SymVar(programName));
+    var->glob = compiler::GLOB::GLOBAL;
+    var->type = std::shared_ptr<compiler::SymType>(new SymType(programName));
+    varTable[lexeme.name] = var;
+  }
   scanner.nextLex();
   lexeme = scanner.lex();
   if (lexeme.tag != compiler::Tag::SEMICOLON)
@@ -74,7 +145,60 @@ void compiler::Parser::parseProgramName ( void ){
   scanner.nextLex();
 };
 
-void compiler::Parser::parseConst ( void ){};
+void compiler::Parser::parseConst ( void ) {
+  scanner.nextLex();
+  compiler::Lexeme lexeme = scanner.lex();
+
+  if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
+    err("IDENTIFIER");
+
+    for (;lexeme.token == compiler::Token::IDENTIFIER && lexeme.tag == compiler::Tag::UNDEFINED;
+         scanner.nextLex(), lexeme = scanner.lex()) {
+
+      if (varTable.find(lexeme.name) != varTable.end())
+        errDuplicated();
+
+      compiler::pSymVar var = pSymVar(new SymVar(lexeme));
+      var->glob = compiler::GLOB::CONST;
+      scanner.nextLex();
+      lexeme = scanner.lex();
+
+      switch (lexeme.tag) {
+        case (compiler::Tag::EQUALS) :
+          scanner.nextLex();
+          lexeme = scanner.lex();
+          auto iter = varTable.find(lexeme.name);
+          if (lexeme.token == compiler::Token::LITERAL) {
+            switch (lexeme.tag) {
+              case (compiler::Tag::NIL) : var->type = compiler::pSym(new TypeScalar(compiler::Tag::POINTER)); break;
+              case (compiler::Tag::INTEGER) : var->type = compiler::pSym(new TypeScalar(lexeme.tag)); break;
+              case (compiler::Tag::FLOAT) : var->type = compiler::pSym(new TypeScalar(compiler::Tag::REAL)); break;
+              case (compiler::Tag::CHARACTER) : var->type = compiler::pSym(new TypeScalar(compiler::Tag::CHAR)); break;
+              case (compiler::Tag::B_TRUE) : var->type = compiler::pSym(new TypeScalar(compiler::Tag::BOOLEAN)); break;
+              case (compiler::Tag::B_FALSE) : var->type = compiler::pSym(new TypeScalar(compiler::Tag::BOOLEAN)); break;
+              default : err("supported literal");
+            }
+          } else if (iter != varTable.end() && iter.second->glob == compiler::GLOB::GLOBAL) {//TODO: CHECK CONST!
+            var->type = iter->second->type;
+          } else
+            err("literal with ordinary type/const");
+        break;
+        case (compiler::Tag::COLON) ://TODO: LIKE VARIABLLE!
+          scanner.nextLex();
+          lexeme = scanner.lex();
+          var->type = parseType(lexeme, true);
+        break;
+        default : err("=");
+      }
+      varTable[var->name] = var;
+
+      scanner.nextLex();
+      lexeme = scanner.lex();
+
+      if (lexeme.tag != compiler::Tag::SEMICOLON)
+        err("';'");
+    }
+};
 
 void compiler::Parser::parseVar ( void ) {
 
@@ -90,9 +214,9 @@ void compiler::Parser::parseVar ( void ) {
     if (varTable.find(lexeme.name) != varTable.end())
       errDuplicated();
 
-    std::vector< std::shared_ptr<SymVar> > var;
+    std::vector<pSymVar> var;
 
-    var.push_back(std::shared_ptr<SymVar>(new SymVar(lexeme)));
+    var.push_back(pSymVar(new SymVar(lexeme)));
     var.back()->glob = compiler::GLOB::GLOBAL;
     scanner.nextLex();
     lexeme = scanner.lex();
@@ -107,7 +231,7 @@ void compiler::Parser::parseVar ( void ) {
       if (varTable.find(lexeme.name) != varTable.end())
         errDuplicated();
 
-      var.push_back(std::shared_ptr<SymVar>(new SymVar(lexeme)));
+      var.push_back(pSymVar(new SymVar(lexeme)));
       var.back()->glob = compiler::GLOB::GLOBAL;
     }
 
@@ -115,28 +239,25 @@ void compiler::Parser::parseVar ( void ) {
       err("':'");
 
     scanner.nextLex();
-    lexeme = scanner.lex();
+    compiler::Lexeme lexeme = scanner.lex();
+    compiler::pSym type = parseType(lexeme, false);
 
-    auto iter = typeTable.find(lexeme.name);
-    if (iter == typeTable.end())
-      errUndefType();
-
-    for (auto elem : var)
-      varTable[elem->name] = iter->second;
+    for (auto elem : var) {
+      elem->type = type;
+      varTable[elem->name] = elem;
+    }
 
     scanner.nextLex();
     lexeme = scanner.lex();
 
     if (lexeme.tag != compiler::Tag::SEMICOLON)
       err("';'");
-  };
+  }
 };
 
 void compiler::Parser::parseFunction ( void ){};
 void compiler::Parser::parseProcedure ( void ){};
-void compiler::Parser::parseType ( void ) {
-  
-};
+void compiler::Parser::parseAlias ( void ){};
 
 compiler::pExpr compiler::Parser::parseExpr ( const compiler::Priority& priority ) {
   if (priority == Priority::HIGHEST)

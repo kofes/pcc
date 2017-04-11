@@ -61,12 +61,14 @@ private:
   pStmt parseEmpty ( void );
   pStmt parseBlock ( void );
 
+  pSym parseType ( compiler::Lexeme& lexeme, bool eq );
+
   void parseProgramName ( void );
   void parseConst ( void );
   void parseVar ( void );
   void parseFunction ( void );
   void parseProcedure ( void );
-  void parseType ( void );
+  void parseAlias ( void );
 
   std::vector<pExpr> parseArrayIndex ( void );
 
