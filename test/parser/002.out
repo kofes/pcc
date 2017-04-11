@@ -1,1 +1,1 @@
-Unexpected token '' in pos (2, 1); expected 'SEMICOLON';
+Unexpected end of file in pos (2, 1); expected 'SEMICOLON';
