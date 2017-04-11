@@ -63,6 +63,10 @@ void compiler::Scanner::nextLex ( void ) {
       readHex();
       return;
     }
+    if (sym == '&') {
+      readOct();
+      return;
+    }
     if (std::ispunct(sym)) {
       if (sym == '{') {
         while (!input.eof() && sym != '}') {
@@ -230,6 +234,40 @@ void compiler::Scanner::readBin ( void ) {
   tag = Tag::INTEGER;
 }
 
+void compiler::Scanner::readOct ( void ) {
+  sym = input.get();
+  ++column;
+  unsigned long long int sum = 0;
+  std::string buff = "&";
+
+  while (!input.eof() && std::isdigit(sym) && sym >= '0' && sym <= '7') {
+    buff += sym;
+    sum <<= 3;
+    sum += sym - '0';
+    ++column;
+    sym = input.get();
+  }
+  if (buff.length() == 1) {
+    lexeme = buff;
+    token = Token::UNDEFINED;
+    tag = Tag::UNDEFINED;
+    return;
+  }
+  if (sym == '\'' || sym == '_' || std::isalpha(sym) || sym == '.') {
+    lexeme = buff;
+    lexeme += sym;
+    countAph = -1;
+    token = Token::UNDEFINED;
+    tag = Tag::UNDEFINED;
+    return;
+  }
+  lexeme = std::to_string(sum);
+  countAph = buff.length() - lexeme.length();
+
+  token = Token::LITERAL;
+  tag = Tag::INTEGER;
+};
+
 void compiler::Scanner::readHex ( void ) {
   sym = input.get();
   ++column;
@@ -248,7 +286,6 @@ void compiler::Scanner::readHex ( void ) {
   }
   if (buff.length() == 1) {
     lexeme = buff;
-    // countAph = -1;
     token = Token::UNDEFINED;
     tag = Tag::UNDEFINED;
     return;
