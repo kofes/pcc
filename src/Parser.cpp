@@ -26,10 +26,10 @@ void compiler::Parser::parse ( void ) {
   scanner.nextLex();
   while (true) {
     switch (scanner.lex().tag) {
-      case (compiler::Tag::PROGRAM) : programTokenChecked ? err(scanner.lex()) : parseProgramName(); break;//Only one!
+      case (compiler::Tag::PROGRAM) : programTokenChecked ? err(scanner.lex()) : parseProgramName(); break;
       case (compiler::Tag::TYPE) : parseType(); break;
       case (compiler::Tag::CONST) : parseConst(); break;
-      case (compiler::Tag::VAR) : parseVar(); break;//Only one!
+      case (compiler::Tag::VAR) : parseVar(); break;
       case (compiler::Tag::FUNCTION) : parseFunction(); break;
       case (compiler::Tag::PROCEDURE) : parseProcedure(); break;
       case (compiler::Tag::BEGIN) : root = parseBlock(); return;
@@ -134,7 +134,9 @@ void compiler::Parser::parseVar ( void ) {
 
 void compiler::Parser::parseFunction ( void ){};
 void compiler::Parser::parseProcedure ( void ){};
-void compiler::Parser::parseType ( void ){};
+void compiler::Parser::parseType ( void ) {
+  
+};
 
 compiler::pExpr compiler::Parser::parseExpr ( const compiler::Priority& priority ) {
   if (priority == Priority::HIGHEST)
