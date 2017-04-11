@@ -12,11 +12,69 @@ void compiler::Parser::set ( const std::string& filename ) {
   scanner.open(filename);
 };
 
-void compiler::Parser::parse ( void ) {
+void compiler::Parser::parseExpr ( void ) {
   scanner.nextLex();
   root = parseExpr(compiler::Priority::LOWEST);
-  if (scanner.lex().token != compiler::Token::END_OF_FILE) err(scanner.lex());
 };
+
+void compiler::Parser::parse ( void ) {
+  programTokenChecked = varTokenChecked = false;
+  scanner.nextLex();
+  while (true) {
+    switch (scanner.lex().tag) {
+      case (compiler::Tag::PROGRAM) : programTokenChecked ? err(scanner.lex()) : parseProgramName(); break;//Only one!
+      case (compiler::Tag::TYPE) : parseType(); break;
+      case (compiler::Tag::CONST) : parseConst(); break;
+      case (compiler::Tag::VAR) : varTokenChecked ? err(scanner.lex()) : parseVar(); break;//Only one!
+      case (compiler::Tag::FUNCTION) : parseFunction(); break;
+      case (compiler::Tag::PROCEDURE) : parseProcedure(); break;
+      case (compiler::Tag::BEGIN) : root = parseBlock(); return;
+      default : err(scanner.lex());
+    }
+    programTokenChecked = true;
+  }
+};
+
+compiler::pStmt compiler::Parser::parseStmt ( void ) {
+  switch (scanner.lex().tag) {
+    case (compiler::Tag::IF) : return parseIf();
+    case (compiler::Tag::WHILE) : return parseWhile();
+    case (compiler::Tag::REPEAT) : return parseRepeat();
+    case (compiler::Tag::FOR) : return parseFor();
+    case (compiler::Tag::SEMICOLON) : return parseEmpty();
+    case (compiler::Tag::BEGIN) : return parseBlock();
+    default : return std::dynamic_pointer_cast<compiler::Stmt>(std::dynamic_pointer_cast<compiler::Node>(parseExpr(compiler::Priority::LOWEST)));
+  }
+  err(scanner.lex());
+};
+
+compiler::pStmt compiler::Parser::parseIf ( void ){};
+compiler::pStmt compiler::Parser::parseWhile ( void ){};
+compiler::pStmt compiler::Parser::parseRepeat ( void ){};
+compiler::pStmt compiler::Parser::parseFor ( void ){};
+compiler::pStmt compiler::Parser::parseEmpty ( void ){};
+compiler::pStmt compiler::Parser::parseBlock ( void ){};
+
+void compiler::Parser::parseProgramName ( void ){
+  compiler::Lexeme programName = scanner.lex();
+  scanner.nextLex();
+  compiler::Lexeme lexeme = scanner.lex();
+  if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
+    err("PROGRAM NAME");
+  else
+    baseVar[lexeme.name] = std::shared_ptr<compiler::SymType>(new SymType(programName));
+  scanner.nextLex();
+  lexeme = scanner.lex();
+  if (lexeme.tag != compiler::Tag::SEMICOLON)
+    err("SEMICOLON");
+  scanner.nextLex();
+};
+
+void compiler::Parser::parseConst ( void ){};
+void compiler::Parser::parseVar ( void ){};
+void compiler::Parser::parseFunction ( void ){};
+void compiler::Parser::parseProcedure ( void ){};
+void compiler::Parser::parseType ( void ){};
 
 compiler::pExpr compiler::Parser::parseExpr ( const compiler::Priority& priority ) {
   if (priority == Priority::HIGHEST)
@@ -101,9 +159,11 @@ compiler::pExpr compiler::Parser::parseIdentifier ( compiler::Lexeme lexeme ) {
 };
 
 std::string compiler::Parser::print ( void ) {
+
+  if (scanner.lex().tag != compiler::Tag::DOT && scanner.lex().token != compiler::Token::END_OF_FILE) err(scanner.lex());//Program's end is 'end.'
+
   std::ostringstream out;
-  if (root != nullptr)
-    out << root->print(0);
+  out << root->print(0);
   return out.str();
 };
 
@@ -144,6 +204,8 @@ void compiler::Parser::err ( const std::string& expected_token ) {
 };
 
 void compiler::Parser::err ( const compiler::Lexeme& lexeme ) {
+  if (lexeme.token == compiler::Token::END_OF_FILE)
+    throw ExprException("Unexpected end of file in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
   throw ExprException("Unexpected token '" + lexeme.name + "' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
 };
 
