@@ -26,8 +26,11 @@ void compiler::Parser::parse ( void ) {
   scanner.nextLex();
   while (true) {
     switch (scanner.lex().tag) {
+      //CHECKED
       case (compiler::Tag::PROGRAM) : programTokenChecked ? err(scanner.lex()) : parseProgramName(); break;
+      //TODO!
       case (compiler::Tag::TYPE) : parseAlias(); break;
+      //IN WORK!
       case (compiler::Tag::CONST) : parseConst(); break;
       case (compiler::Tag::VAR) : parseVar(); break;
       case (compiler::Tag::FUNCTION) : parseFunction(); break;
@@ -76,10 +79,10 @@ compiler::pSym compiler::Parser::parseType ( compiler::Lexeme& lexeme, bool eq )
         lexeme = scanner.lex();
         //LITERAL OR CONST_INTEGER!
         auto iter = varTable.find(lexeme.name);
-        if (lexeme.token == compiler::Tag::LITERAL && lexeme.tag == compiler::Tag::INTEGER)
+        if (lexeme.token == compiler::Token::LITERAL && lexeme.tag == compiler::Tag::INTEGER)
           vArray.low = std::strtoll(lexeme.name.c_str(), nullptr, 10);
-        else if (iter != varTable.end() && iter.second->glob == compiler::GLOB::GLOBAL && iter.second->pSym->tag == INTEGER) {//TODO: CHECK CONST_INTEGER!
-          vArray.low = std::strtoll(iter.second->value.c_str(), nullptr, 10);//TEST VALUE!
+        else if (iter != varTable.end() && iter->second->glob == compiler::GLOB::CONST && iter->second->tag == compiler::Tag::INTEGER) {//TODO: CHECK CONST_INTEGER!
+          vArray.low = std::strtoll(iter->second->value.c_str(), nullptr, 10);//TEST VALUE!
         } else
           err("integer literal/const integer");
 
@@ -91,15 +94,15 @@ compiler::pSym compiler::Parser::parseType ( compiler::Lexeme& lexeme, bool eq )
         scanner.nextLex();
         lexeme = scanner.lex();
         //LITERAL OR CONST_INTEGER!
-        auto iter = varTable.find(lexeme.name);
-        if (lexeme.token == compiler::Tag::LITERAL && lexeme.tag == compiler::Tag::INTEGER)
+        iter = varTable.find(lexeme.name);
+        if (lexeme.token == compiler::Token::LITERAL && lexeme.tag == compiler::Tag::INTEGER)
           vArray.high = std::strtoll(lexeme.name.c_str(), nullptr, 10);
-        else if (iter != varTable.end() && iter.second->glob == compiler::GLOB::GLOBAL && iter.second->pSym->tag == INTEGER) {//TODO: CHECK CONST_INTEGER!
-          vArray.high = std::strtoll(iter.second->value.c_str(), nullptr, 10);//TEST VALUE!
+        else if (iter != varTable.end() && iter->second->glob == compiler::GLOB::CONST && iter->second->tag == compiler::Tag::INTEGER) {//TODO: CHECK CONST_INTEGER!
+          vArray.high = std::strtoll(iter->second->value.c_str(), nullptr, 10);//TEST VALUE!
         } else
           err("integer literal/const integer");
         if (vArray.high <= vArray.low)
-          throw ExprException("array 'high' <= 'low' in pos(" + std::to_string(vArray.row) + ", " + std::tostring(vArray.column) + ");");
+          throw ExprException("array 'high' <= 'low' in pos(" + std::to_string(vArray.row) + ", " + std::to_string(vArray.column) + ");");
 
         scanner.nextLex();
         lexeme = scanner.lex();
@@ -152,52 +155,52 @@ void compiler::Parser::parseConst ( void ) {
   if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
     err("IDENTIFIER");
 
-    for (;lexeme.token == compiler::Token::IDENTIFIER && lexeme.tag == compiler::Tag::UNDEFINED;
-         scanner.nextLex(), lexeme = scanner.lex()) {
+  for (;lexeme.token == compiler::Token::IDENTIFIER && lexeme.tag == compiler::Tag::UNDEFINED;
+       scanner.nextLex(), lexeme = scanner.lex()) {
 
-      if (varTable.find(lexeme.name) != varTable.end())
-        errDuplicated();
+    if (varTable.find(lexeme.name) != varTable.end())
+      errDuplicated();
 
-      compiler::pSymVar var = pSymVar(new SymVar(lexeme));
-      var->glob = compiler::GLOB::CONST;
-      scanner.nextLex();
-      lexeme = scanner.lex();
-
-      switch (lexeme.tag) {
-        case (compiler::Tag::EQUALS) :
-          scanner.nextLex();
-          lexeme = scanner.lex();
-          auto iter = varTable.find(lexeme.name);
-          if (lexeme.token == compiler::Token::LITERAL) {
-            switch (lexeme.tag) {
-              case (compiler::Tag::NIL) : var->type = compiler::pSym(new TypeScalar(compiler::Tag::POINTER)); break;
-              case (compiler::Tag::INTEGER) : var->type = compiler::pSym(new TypeScalar(lexeme.tag)); break;
-              case (compiler::Tag::FLOAT) : var->type = compiler::pSym(new TypeScalar(compiler::Tag::REAL)); break;
-              case (compiler::Tag::CHARACTER) : var->type = compiler::pSym(new TypeScalar(compiler::Tag::CHAR)); break;
-              case (compiler::Tag::B_TRUE) : var->type = compiler::pSym(new TypeScalar(compiler::Tag::BOOLEAN)); break;
-              case (compiler::Tag::B_FALSE) : var->type = compiler::pSym(new TypeScalar(compiler::Tag::BOOLEAN)); break;
-              default : err("supported literal");
-            }
-          } else if (iter != varTable.end() && iter.second->glob == compiler::GLOB::GLOBAL) {//TODO: CHECK CONST!
-            var->type = iter->second->type;
-          } else
-            err("literal with ordinary type/const");
-        break;
-        case (compiler::Tag::COLON) ://TODO: LIKE VARIABLLE!
-          scanner.nextLex();
-          lexeme = scanner.lex();
-          var->type = parseType(lexeme, true);
-        break;
-        default : err("=");
-      }
-      varTable[var->name] = var;
-
-      scanner.nextLex();
-      lexeme = scanner.lex();
-
-      if (lexeme.tag != compiler::Tag::SEMICOLON)
-        err("';'");
+    compiler::pSymVar var = pSymVar(new SymVar(lexeme));
+    var->glob = compiler::GLOB::CONST;
+    scanner.nextLex();
+    lexeme = scanner.lex();
+    SymTable::iterator iter;
+    switch (lexeme.tag) {
+      case (compiler::Tag::EQUALS) :
+        scanner.nextLex();
+        lexeme = scanner.lex();
+        iter = varTable.find(lexeme.name);
+        if (lexeme.token == compiler::Token::LITERAL) {
+          switch (lexeme.tag) {
+            case (compiler::Tag::NIL) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::POINTER)); break;
+            case (compiler::Tag::INTEGER) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::INTEGER)); break;
+            case (compiler::Tag::FLOAT) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::REAL)); break;
+            case (compiler::Tag::CHARACTER) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::CHAR)); break;
+            case (compiler::Tag::B_TRUE) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::BOOLEAN)); break;
+            case (compiler::Tag::B_FALSE) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::BOOLEAN)); break;
+            default : err("supported literal");
+          }
+        } else if (iter != varTable.end() && iter->second->glob == compiler::GLOB::CONST) {//TODO: CHECK CONST!
+          var->type = iter->second->type;
+        } else
+          err("literal with ordinary type/const");
+      break;
+      case (compiler::Tag::COLON) ://TODO: LIKE VARIABLLE!
+        scanner.nextLex();
+        lexeme = scanner.lex();
+        var->type = parseType(lexeme, true);
+      break;
+      default : err("=");
     }
+    varTable[var->name] = var;
+
+    scanner.nextLex();
+    lexeme = scanner.lex();
+
+    if (lexeme.tag != compiler::Tag::SEMICOLON)
+      err("';'");
+  }
 };
 
 void compiler::Parser::parseVar ( void ) {

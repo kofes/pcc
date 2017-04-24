@@ -26,7 +26,7 @@ enum class SCALAR_TYPE : unsigned long int {
 struct Sym;
 struct SymVar;
 typedef std::shared_ptr<Sym> pSym;
-typedef std::shared_ptr<Sym> pSymVar;
+typedef std::shared_ptr<SymVar> pSymVar;
 //first: varName; second: descriptor of var
 typedef std::map< std::string, pSymVar > SymTable;
 //first: typeName; second: descriptor of type
@@ -80,6 +80,7 @@ struct TypeRecord : public SymType {
 //TAG: POINTER, NAME: nameType
 struct TypePointer : public SymType {
   TypePointer ( const Lexeme& lex ) : SymType(lex) {};
+  pSym elemType;
 };
 //TAG: TYPE/ALIAS, NAME: nameNewType, TYPE: what is type was copied?
 struct TypeAlias : public SymType {
