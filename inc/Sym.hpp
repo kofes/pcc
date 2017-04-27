@@ -54,7 +54,8 @@ struct SymFunc : public Sym {
   SymFunc ( const Lexeme& lex, const pSym& rt, const pSymTable& tbl, const pNode& bd ) : Sym(lex), retType(rt), symTable(tbl), body(bd) {};
   std::string print ( unsigned int deep ) override;
   pSymVar retType;
-  pSymTable symTable;
+  pSymTable params;
+  pSymTable varTable;
   pTypeTable typeTable;
   pNode body;//begin->end;,... (like in GLOBAL!)
 };

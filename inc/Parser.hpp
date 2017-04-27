@@ -27,6 +27,12 @@ enum class Priority : unsigned short {
   LOWEST = 3
 };
 
+enum class Init {
+  NO,
+  YES,
+  MAYBE
+};
+
 class Parser {
 public:
   Parser ( void );
@@ -47,6 +53,7 @@ private:
   void err ( const Lexeme& lexeme );
   void errUndefType ( void );
   void errDuplicated ( void );
+  void checkVar ( const Lexeme& lexeme );
 
   pExpr parseExpr ( const Priority& priority );
   pExpr parseIdentifier ( Lexeme lexeme );
@@ -61,11 +68,11 @@ private:
   pStmt parseEmpty ( void );
   pStmt parseBlock ( void );
 
-  pSym parseType ( compiler::Lexeme& lexeme, bool eq );
+  pSym parseType ( compiler::Lexeme& lexeme, Init init );
 
   void parseProgramName ( void );
-  void parseConst ( void );
-  void parseVar ( void );
+  void parseConst ( SymTable& vTable );
+  void parseVar ( SymTable& vTable );
   void parseFunction ( void );
   void parseProcedure ( void );
   void parseAlias ( void );
@@ -82,7 +89,7 @@ private:
   SymTable varTable;
   TypeTable typeTable;
   //first: nameFunc; second: descriptor of function/procedure;
-  std::map<std::string, pSym> function;
+  std::map<std::string, pSym> funcTable;
 
   bool programTokenChecked;
 };

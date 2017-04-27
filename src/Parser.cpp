@@ -31,8 +31,8 @@ void compiler::Parser::parse ( void ) {
       //TODO!
       case (compiler::Tag::TYPE) : parseAlias(); break;
       //IN WORK!
-      case (compiler::Tag::CONST) : parseConst(); break;
-      case (compiler::Tag::VAR) : parseVar(); break;
+      case (compiler::Tag::CONST) : parseConst(varTable); break;
+      case (compiler::Tag::VAR) : parseVar(varTable); break;
       case (compiler::Tag::FUNCTION) : parseFunction(); break;
       case (compiler::Tag::PROCEDURE) : parseProcedure(); break;
       case (compiler::Tag::BEGIN) : root = parseBlock(); return;
@@ -135,12 +135,12 @@ void compiler::Parser::parseProgramName ( void ){
   compiler::Lexeme lexeme = scanner.lex();
   if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
     err("PROGRAM NAME");
-  else {
-    std::shared_ptr<compiler::SymVar> var = std::shared_ptr<compiler::SymVar>(new SymVar(programName));
-    var->glob = compiler::GLOB::GLOBAL;
-    var->type = std::shared_ptr<compiler::SymType>(new SymType(programName));
-    varTable[lexeme.name] = var;
-  }
+
+  std::shared_ptr<compiler::SymVar> var = std::shared_ptr<compiler::SymVar>(new SymVar(programName));
+  var->glob = compiler::GLOB::GLOBAL;
+  var->type = std::shared_ptr<compiler::SymType>(new SymType(programName));
+  varTable[lexeme.name] = var;
+
   scanner.nextLex();
   lexeme = scanner.lex();
   if (lexeme.tag != compiler::Tag::SEMICOLON)
@@ -148,79 +148,82 @@ void compiler::Parser::parseProgramName ( void ){
   scanner.nextLex();
 };
 
-void compiler::Parser::parseConst ( void ) {
+void compiler::Parser::parseConst ( SymTable& vTable ) {
   scanner.nextLex();
   compiler::Lexeme lexeme = scanner.lex();
 
-  if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
-    err("IDENTIFIER");
+  checkIdent(lexeme, vTable);
 
   for (;lexeme.token == compiler::Token::IDENTIFIER && lexeme.tag == compiler::Tag::UNDEFINED;
        scanner.nextLex(), lexeme = scanner.lex()) {
 
-    if (varTable.find(lexeme.name) != varTable.end())
-      errDuplicated();
+    checkIdent(lexeme, vTable);
 
     compiler::pSymVar var = pSymVar(new SymVar(lexeme));
+
+    scanner.nextLex();
+    lexeme = scanner.lex();
+
+    var->type = nullptr;
+
+    if (lexeme.tag == compiler::Tag::COLON)
+      var->type = parseType(lexeme, compiler::Init::YES);
+    //NOW scanner.lex().name == '='
+
+    scanner.nextLex();
+    lexeme = scanner.lex();
+
+    var->value = parseInit(type);
+
+    //NOW scanner.lex().name == ';'
+
+    // SymTable::iterator iter;
+    // switch (lexeme.tag) {
+    //   case (compiler::Tag::EQUALS) :
+    //     scanner.nextLex();
+    //     lexeme = scanner.lex();
+    //     iter = varTable.find(lexeme.name);
+    //     if (lexeme.token == compiler::Token::LITERAL) {
+    //       switch (lexeme.tag) {
+    //         case (compiler::Tag::NIL) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::POINTER)); break;
+    //         case (compiler::Tag::INTEGER) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::INTEGER)); break;
+    //         case (compiler::Tag::FLOAT) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::REAL)); break;
+    //         case (compiler::Tag::CHARACTER) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::CHAR)); break;
+    //         case (compiler::Tag::B_TRUE) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::BOOLEAN)); break;
+    //         case (compiler::Tag::B_FALSE) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::BOOLEAN)); break;
+    //         default : err("supported literal");
+    //       }
+    //     } else if (iter != varTable.end() && iter->second->glob == compiler::GLOB::CONST) {//TODO: CHECK CONST!
+    //       var->type = iter->second->type;
+    //     } else
+    //       err("literal with ordinary type/const");
+    //   break;
+    //   default : err("=");
+    // }
+
     var->glob = compiler::GLOB::CONST;
-    scanner.nextLex();
-    lexeme = scanner.lex();
-    SymTable::iterator iter;
-    switch (lexeme.tag) {
-      case (compiler::Tag::EQUALS) :
-        scanner.nextLex();
-        lexeme = scanner.lex();
-        iter = varTable.find(lexeme.name);
-        if (lexeme.token == compiler::Token::LITERAL) {
-          switch (lexeme.tag) {
-            case (compiler::Tag::NIL) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::POINTER)); break;
-            case (compiler::Tag::INTEGER) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::INTEGER)); break;
-            case (compiler::Tag::FLOAT) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::REAL)); break;
-            case (compiler::Tag::CHARACTER) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::CHAR)); break;
-            case (compiler::Tag::B_TRUE) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::BOOLEAN)); break;
-            case (compiler::Tag::B_FALSE) : var->type = compiler::pSym(new TypeScalar(SCALAR_TYPE::BOOLEAN)); break;
-            default : err("supported literal");
-          }
-        } else if (iter != varTable.end() && iter->second->glob == compiler::GLOB::CONST) {//TODO: CHECK CONST!
-          var->type = iter->second->type;
-        } else
-          err("literal with ordinary type/const");
-      break;
-      case (compiler::Tag::COLON) ://TODO: LIKE VARIABLLE!
-        scanner.nextLex();
-        lexeme = scanner.lex();
-        var->type = parseType(lexeme, true);
-      break;
-      default : err("=");
-    }
-    varTable[var->name] = var;
+    vTable[var->name] = var;
 
     scanner.nextLex();
     lexeme = scanner.lex();
-
-    if (lexeme.tag != compiler::Tag::SEMICOLON)
-      err("';'");
   }
 };
 
-void compiler::Parser::parseVar ( void ) {
+void compiler::Parser::parseVar ( SymTable& vTable ) {
+  std::vector<pSymVar> var;
 
   scanner.nextLex();
   compiler::Lexeme lexeme = scanner.lex();
 
-  if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
-    err("IDENTIFIER");
+  checkIdent(lexeme, vTable);
 
   for (;lexeme.token == compiler::Token::IDENTIFIER && lexeme.tag == compiler::Tag::UNDEFINED;
        scanner.nextLex(), lexeme = scanner.lex()) {
 
-    if (varTable.find(lexeme.name) != varTable.end())
-      errDuplicated();
-
-    std::vector<pSymVar> var;
+    checkIdent(lexeme, vTable);
 
     var.push_back(pSymVar(new SymVar(lexeme)));
-    var.back()->glob = compiler::GLOB::GLOBAL;
+
     scanner.nextLex();
     lexeme = scanner.lex();
 
@@ -228,39 +231,120 @@ void compiler::Parser::parseVar ( void ) {
       scanner.nextLex();
       lexeme = scanner.lex();
 
-      if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
-        err("IDENTIFIER");
-
-      if (varTable.find(lexeme.name) != varTable.end())
-        errDuplicated();
-
+      checkVar(lexeme);
       var.push_back(pSymVar(new SymVar(lexeme)));
-      var.back()->glob = compiler::GLOB::GLOBAL;
     }
 
     if (lexeme.tag != compiler::Tag::COLON)
       err("':'");
 
     scanner.nextLex();
-    compiler::Lexeme lexeme = scanner.lex();
-    compiler::pSym type = parseType(lexeme, false);
+    lexeme = scanner.lex();
+
+    compiler::pSym type = parseType(lexeme, compiler::Init::MAYBE);
+
+    if (scanner.lex().tag == compiler::Tag::COLON) {
+      if (var.size() != 1)
+        err("';'");
+      var.front()->value = parseInit(type);
+    }
 
     for (auto elem : var) {
       elem->type = type;
-      varTable[elem->name] = elem;
+      elem->glob = compiler::GLOB::GLOBAL;
+      vTable[elem->name] = elem;
     }
-
-    scanner.nextLex();
-    lexeme = scanner.lex();
-
-    if (lexeme.tag != compiler::Tag::SEMICOLON)
-      err("';'");
   }
 };
 
-void compiler::Parser::parseFunction ( void ){};
+void compiler::Parser::parseFunction ( void ) {
+  scanner.next();
+  compiler::Lexeme lexeme = scanner.lex();
+  //Pascal feature: function result variable has name like a name of function
+  checkIdent(lexeme);
+
+  std::shared_ptr<compiler::SymFunc> func = new compiler::SymFunc(lexeme);
+
+  scanner.next();
+  lexeme = scanner.lex();
+
+  if (lexeme.tag != compiler::Tag::LEFT_PARENTHESIS)
+    err("'('");
+
+  func->params = parseParams();
+
+  //NOW scanner.lex().name == ")"
+
+  scanner.nextLex();
+  lexeme = scanner.lex();
+
+  if (lexeme.tag != compiler::Tag::COLON)
+    err("':'");
+
+  scanner.next();
+  lexeme = scanner.lex();
+
+  func->retType = parseType(lexeme, compiler::Init::NO);
+
+  //NOW scanner.lex().name == ";"
+
+  scanner.next();
+  lexeme = scanner.lex();
+
+  while (lexeme.tag != compiler::Tag::BEGIN) {
+    switch (lexeme.tag) {
+      case (compiler::Tag::TYPE) : parseType(func->typeTable);
+      case (compiler::Tag::VAR) : parseVar(func->varTable, func->typeTable);
+      default: err("Begin");
+    }
+  }
+
+  //NOW scanner.lex().name == "BEGIN"
+
+  func->body = parseBlock();
+
+  //NOW scanner.lex().name == "END"
+
+  scanner.nextLex();
+  lexeme = scanner.lex();
+
+  if (lexeme.tag != compiler::Tag::SEMICOLON)
+    err("';'");
+
+  funcTable[func->name] = func;
+
+  scanner.nextLex();
+  lexeme = scanner.lex();
+};
 void compiler::Parser::parseProcedure ( void ){};
-void compiler::Parser::parseAlias ( void ){};
+void compiler::Parser::parseAlias ( void ) {
+  scanner.nextLex();
+  compiler::Lexeme lexeme = scanner.lex();
+
+  if (typeTable.find(lexeme.name) != typeTable.end())
+    errDuplicated();//No duplicated types!
+  if (lexeme.token != compiler::Tag::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
+    err("'Identifier'");
+
+  while (lexeme.token == compiler::Token::IDENTIFIER && lexeme.tag == compiler::Tag::UNDEFINED) {
+    compiler::Lexeme ident = lexeme;
+    SymType type;
+    scanner.nextLex();
+    lexeme = scanner.lex();
+    if (lexeme.tag != compiler::Tag::EQUALS)
+      err("'='");
+    scanner.next();
+    lexeme = scanner.lex();
+    switch (lexeme.tag) {
+      case (compiler::Tag::RECORD): type = parseRecord();
+      case (compiler::Tag::LEFT_PARENTHESIS): type = parseEnum();
+      default: type = parseType(lexeme, compiler::Init::NO);
+    }
+    typeTable[ident.name] = type;
+    scanner.next();
+    lexeme = scanner.lex();
+  }
+};
 
 compiler::pExpr compiler::Parser::parseExpr ( const compiler::Priority& priority ) {
   if (priority == Priority::HIGHEST)
@@ -407,6 +491,13 @@ void compiler::Parser::errUndefType ( void ) {
 void compiler::Parser::errDuplicated ( void ) {
   compiler::Lexeme lexeme = scanner.lex();
   throw ExprException("Duplicate identifier \"" + lexeme.name + "\" in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
+};
+
+void compiler::Parser::checkVar ( const Lexeme& lexeme ) {
+  if (lexeme.token != compiler::Token::IDENTIFIER || lexeme.tag != compiler::Tag::UNDEFINED)
+    err("Identifier");
+  if (varTable.find(lexeme.name) != varTable.end())
+    errDuplicated();
 };
 
 void compiler::Parser::setPriorities ( void ) {
