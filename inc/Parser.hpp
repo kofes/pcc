@@ -53,7 +53,7 @@ private:
   void err ( const Lexeme& lexeme );
   void errUndefType ( void );
   void errDuplicated ( void );
-  void checkVar ( const Lexeme& lexeme );
+  void checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable );
 
   pExpr parseExpr ( const Priority& priority );
   pExpr parseIdentifier ( Lexeme lexeme );
@@ -69,13 +69,15 @@ private:
   pStmt parseBlock ( void );
 
   pSym parseType ( compiler::Lexeme& lexeme, Init init );
+  pSym parseRecord ( void );
+  pSym parseEnum ( void );
 
   void parseProgramName ( void );
-  void parseConst ( SymTable& vTable );
-  void parseVar ( SymTable& vTable );
+  void parseConst ( SymTable& vTable, TypeTable& tTable );
+  void parseVar ( SymTable& vTable, TypeTable& tTable );
   void parseFunction ( void );
   void parseProcedure ( void );
-  void parseAlias ( void );
+  void parseAlias ( SymTable& vTable, TypeTable& tTable );
 
   std::vector<pExpr> parseArrayIndex ( void );
 
