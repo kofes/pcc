@@ -5,10 +5,15 @@
 #include <unordered_map>
 #include <exception>
 #include <sstream>
+#include <algorithm>
+#include <tuple>
+
 #include "Scanner.hpp"
 #include "Expr.hpp"
 #include "Stmt.hpp"
 #include "Sym.hpp"
+
+#include "Runtime-functions.hpp"
 
 struct ExprException : public std::exception {
   ExprException ( void ) : err("Illegal expression") {};
@@ -19,7 +24,7 @@ private:
 };
 
 namespace compiler {
-
+//ParseExpr-enum
 enum class Priority : unsigned short {
   HIGHEST = 0,
   SECOND = 1,
@@ -27,10 +32,14 @@ enum class Priority : unsigned short {
   LOWEST = 3
 };
 
-enum class Init {
+enum class InitExpected {
   NO,
   YES,
   MAYBE
+};
+
+enum class IdentifierType {
+  VARIABLE, FUNCTION, TYPE
 };
 
 class Parser {
@@ -42,57 +51,84 @@ public:
   void parseExpr ( void );
   std::string print ( void );
 private:
-  void setPriorities ( void );
-  void setTypeTable ( void );
-  Priority upPriority ( const Priority& pr );
-  bool checkPriority ( const Priority& pr, const Tag& tag );
+  //parseExpr
+    //Methods
+    void setPriorities ( void );
+    bool isUnary ( const Tag& tag );
 
-  bool isUnary ( const Tag& tag );
+    pExpr parseExpr ( const Priority& priority );
+    pExpr parseIdentifier ( Lexeme lexeme );
+    pExpr parseFactor ( void );
 
-  void err ( const std::string& expected_token = "" );//UNEXPECTED <- EXPECTED || EOF
-  void err ( const Lexeme& lexeme );
-  void errUndefType ( void );
-  void errDuplicated ( void );
-  void checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable );
+    Priority upPriority ( const Priority& pr );
+    bool checkPriority ( const Priority& pr, const Tag& tag );
 
-  pExpr parseExpr ( const Priority& priority );
-  pExpr parseIdentifier ( Lexeme lexeme );
-  pExpr parseFactor ( void );
+    std::vector<pExpr> parseArgs ( void );
+    //Variables
+    std::unordered_map<Tag, Priority> binaryPriority;
+    std::unordered_map<Tag, Priority> unaryPriority;
+  //
+  //parseBlocks
+    //Methods
+    //Checking for exception
+      void errUndefType ( void );
+      void errDuplicated ( void );
+      void checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable );
+      //If res.type <=> src.type || nullptr => res.[value|type] = src.[value|type] else errType();
+      void checkType ( pSymVar& res, pSymVar& src );
+      void checkFunc ( const Lexeme& lexeme, IdentifierType type, const std::string& args = "" );
 
-  pStmt parseStmt ( void );
+      void checkConst( pNode& root );
+    //
 
-  pStmt parseIf ( void );
-  pStmt parseWhile ( void );
-  pStmt parseRepeat ( void );
-  pStmt parseFor ( void );
-  pStmt parseEmpty ( void );
-  pStmt parseBlock ( void );
+    pStmt parseStmt ( void );
 
-  pSym parseType ( compiler::Lexeme& lexeme, Init init );
-  pSym parseRecord ( void );
-  pSym parseEnum ( void );
+    pStmt parseIf ( void );
+    pStmt parseWhile ( void );
+    pStmt parseRepeat ( void );
+    pStmt parseFor ( void );
+    pStmt parseEmpty ( void );
+    pStmt parseBlock ( void );
 
-  void parseProgramName ( void );
-  void parseConst ( SymTable& vTable, TypeTable& tTable );
-  void parseVar ( SymTable& vTable, TypeTable& tTable );
-  void parseFunction ( void );
-  void parseProcedure ( void );
-  void parseAlias ( SymTable& vTable, TypeTable& tTable );
+    pSym parseType ( compiler::Lexeme& lexeme, InitExpected init );
+    pSym parseRecord ( void );
+    pSym parseEnum ( void );
 
-  std::vector<pExpr> parseArrayIndex ( void );
+    void parseProgramName ( const compiler::Lexeme& program );
 
-//Variables
-  std::unordered_map<Tag, Priority> binaryPriority;
-  std::unordered_map<Tag, Priority> unaryPriority;
+    void parseConst ( SymTable& vTable, TypeTable& tTable );
+    void parseVar ( SymTable& vTable, TypeTable& tTable );
+    //Initialization for Const-decl and Var-decl variables
+    void parseConstExpr ( SymTable& vTable, TypeTable& tTable );
+    pSymVar evalConstExpr ( pNode& root, SymTable& vTable, TypeTable& tTable );
 
-  Scanner scanner;
-  pNode root;//for all!(stmts and exprs)
+    void parseFunction ( void );
+    void parseProcedure ( void );
+    std::tuple<pSymTable, std::string> parseParams( void );
 
-  SymTable varTable;
-  TypeTable typeTable;
-  //first: nameFunc; second: descriptor of function/procedure;
-  std::map<std::string, pSym> funcTable;
+    void parseAlias ( SymTable& vTable, TypeTable& tTable );
 
-  bool programTokenChecked;
+    void setTypeTable ( void );
+    void setVarTable( void );
+
+    //Variables
+    SymTable varTable;
+    TypeTable typeTable;
+    //{first: nameFunc; second: {key: args; value: descriptor of function/procedure;}}
+    std::map< std::string, std::map< std::string, pSym> > funcTable;
+    //Runtime-functions
+    std::map< std::string, RunTimeFunction> fc;
+
+    bool programTokenChecked;
+  //
+  //Global
+    //Methods
+      void err ( const std::string& expected_token = "" );//UNEXPECTED <- EXPECTED || EOF
+      void err ( const Lexeme& lexeme );
+    //Variables
+      Scanner scanner;
+      pNode root;//for all!(stmts and exprs)
+    //
+  //
 };
 };

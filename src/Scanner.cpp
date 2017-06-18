@@ -1,4 +1,4 @@
-#include "Scanner.hpp"
+#include "../inc/Scanner.hpp"
 
 compiler::Scanner::Scanner ( const std::string& filename ) {
   input.open(filename);

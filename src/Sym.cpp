@@ -17,4 +17,5 @@ compiler::TypeScalar::TypeScalar ( SCALAR_TYPE tp ) : SymType(Lexeme()) {
   this->tag = static_cast<compiler::Tag>(tp);
   this->column = this->row = 0;
   this->token = compiler::Token::IDENTIFIER;
+  this->symType = SymEnum::Scalar;
 };

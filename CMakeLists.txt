@@ -6,8 +6,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g")
 
 set(SOURCE_EXE main.cpp)
 
-include_directories(inc)
-
 add_executable(${PROJECT_NAME} ${SOURCE_EXE})
 
 add_subdirectory(src)

@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include "Scanner.hpp"
-#include "Parser.hpp"
+#include "inc/Scanner.hpp"
+#include "inc/Parser.hpp"
 
 const std::string help =
   "Usage\n\n"
