@@ -11,6 +11,8 @@ const std::string help =
   "   -s, --scanner          - Lexer -> print all lexems from <file> to &1\n"
   "   -p, --parser           - Parser -> print syntax trees of statements from <file> to &1\n"
   "   -e, --parse-expression - Parser -> print syntax tree of expressions from <file> to &1\n"
+  "   -v, --parse-variables  - Parser -> print table of variables from <file> to &1\n"
+  "   -f, --parse-functions  - Parser -> print table of functions from <file> to &1\n"
   "   -h, --help             - Print 'help'\n\n"
   "<file> <- 'test.pas', if not setted.\n";
 
@@ -66,7 +68,39 @@ int main(int argc, char const *argv[]) {
       parser.set("test.pas");
     try {
       parser.parseExpr();
-      std::cout << parser.print();
+      std::cout << parser.printExprs();
+    } catch (std::exception& ex) {
+      std::cout << ex.what() << std::endl;
+    }
+    return 0;
+  }
+
+  //PARSER OF VARIABLES
+  if (!std::strcmp(argv[1], "--parse-variables") || !std::strcmp(argv[1], "-v")) {
+    compiler::Parser parser;
+    if (argc > 2)
+      parser.set(argv[2]);
+    else
+      parser.set("test.pas");
+    try {
+      parser.parse();
+      std::cout << parser.printVarTable();
+    } catch (std::exception& ex) {
+      std::cout << ex.what() << std::endl;
+    }
+    return 0;
+  }
+
+  //PARSER OF FUNCTIONS
+  if (!std::strcmp(argv[1], "--parse-functions") || !std::strcmp(argv[1], "-f")) {
+    compiler::Parser parser;
+    if (argc > 2)
+      parser.set(argv[2]);
+    else
+      parser.set("test.pas");
+    try {
+      parser.parse();
+      std::cout << parser.printFuncTable();
     } catch (std::exception& ex) {
       std::cout << ex.what() << std::endl;
     }

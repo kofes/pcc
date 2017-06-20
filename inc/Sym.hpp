@@ -23,10 +23,6 @@ enum class SCALAR_TYPE : unsigned long int {
   REAL = static_cast<unsigned long int>(Tag::REAL)
 };
 
-enum class SymEnum {
-  Var, Function, Scalar, Array, Record, Pointer, Alias
-};
-
 struct Sym;
 struct SymVar;
 typedef std::shared_ptr<Sym> pSym;
@@ -39,7 +35,7 @@ typedef std::shared_ptr<SymTable> pSymTable;
 typedef std::shared_ptr<TypeTable> pTypeTable;
 
 struct Sym : public Node {
-  Sym ( const Lexeme& lex ) : Node(lex) {};
+  Sym ( const Lexeme& lex ) : Node(lex) { nodeType = NodeEnum::Sym; };
   SymEnum symType;
 };
 
@@ -60,7 +56,7 @@ struct SymFunc : public Sym {
   SymFunc ( const Lexeme& lex, const pSym& rt, const pSymTable& prms, const pNode& bd ) :
     Sym(lex), retType(rt), params(prms), body(bd) { symType = SymEnum::Function; };
   //TODO!
-  // std::string print ( unsigned int deep ) override;
+  std::string print ( unsigned int deep ) override;
   pSym retType;
   pSymTable params;
   SymTable varTable;
@@ -71,6 +67,7 @@ struct SymFunc : public Sym {
 struct TypeScalar : public SymType {
   TypeScalar ( const Lexeme& lex ) : SymType(lex) { symType = SymEnum::Scalar; };
   TypeScalar ( SCALAR_TYPE tp );
+  std::string print ( unsigned int deep ) override;
 };
 //ARRAY: <low>...<high> of <elemType>
 struct TypeArray : public SymType {
@@ -90,6 +87,7 @@ struct TypeRecord : public SymType {
 //TAG: POINTER, NAME: nameType
 struct TypePointer : public SymType {
   TypePointer ( const Lexeme& lex ) : SymType(lex) { symType = SymEnum::Pointer; };
+  std::string print ( unsigned int deep ) override;
   pSym elemType;
 };
 //TAG: TYPE/ALIAS, NAME: nameNewType, TYPE: what is type was copied?

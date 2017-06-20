@@ -13,7 +13,7 @@
 #include "Stmt.hpp"
 #include "Sym.hpp"
 
-#include "Runtime-functions.hpp"
+#include "CompileTimeFunctions.hpp"
 
 struct ExprException : public std::exception {
   ExprException ( void ) : err("Illegal expression") {};
@@ -50,6 +50,9 @@ public:
   void parse ( void );
   void parseExpr ( void );
   std::string print ( void );
+  std::string printExprs ( void );
+  std::string printVarTable ( void );
+  std::string printFuncTable ( void );
 private:
   //parseExpr
     //Methods
@@ -73,12 +76,13 @@ private:
     //Checking for exception
       void errUndefType ( void );
       void errDuplicated ( void );
+      void errConstOp ( const Lexeme& lexeme );
       void checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable );
       //If res.type <=> src.type || nullptr => res.[value|type] = src.[value|type] else errType();
       void checkType ( pSymVar& res, pSymVar& src );
       void checkFunc ( const Lexeme& lexeme, IdentifierType type, const std::string& args = "" );
 
-      void checkConst( pNode& root );
+      void checkConst( pExpr& node );
     //
 
     pStmt parseStmt ( void );
@@ -90,7 +94,7 @@ private:
     pStmt parseEmpty ( void );
     pStmt parseBlock ( void );
 
-    pSym parseType ( compiler::Lexeme& lexeme, InitExpected init );
+    pSym parseType ( compiler::Lexeme& lexeme, SymTable& vTable, TypeTable& tTable, InitExpected init );
     pSym parseRecord ( void );
     pSym parseEnum ( void );
 
@@ -100,7 +104,7 @@ private:
     void parseVar ( SymTable& vTable, TypeTable& tTable );
     //Initialization for Const-decl and Var-decl variables
     void parseConstExpr ( SymTable& vTable, TypeTable& tTable );
-    pSymVar evalConstExpr ( pNode& root, SymTable& vTable, TypeTable& tTable );
+    pSymVar evalConstExpr ( pExpr& root, SymTable& vTable, TypeTable& tTable );
 
     void parseFunction ( void );
     void parseProcedure ( void );
@@ -117,7 +121,7 @@ private:
     //{first: nameFunc; second: {key: args; value: descriptor of function/procedure;}}
     std::map< std::string, std::map< std::string, pSym> > funcTable;
     //Runtime-functions
-    std::map< std::string, RunTimeFunction> fc;
+    std::map< std::string, CompileTimeFunction> ctFuncTable;
 
     bool programTokenChecked;
   //

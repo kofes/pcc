@@ -7,12 +7,8 @@
 
 namespace compiler {
 
-enum class ExprEnum {
-  BinOp, UnOp, Integer, Real, Identifier, Record, Array, Function
-};
-
 struct Expr : public Node {
-  Expr ( const Lexeme& lex ) : Node(lex) {};
+  Expr ( const Lexeme& lex ) : Node(lex) { nodeType = NodeEnum::Expr; };
   ExprEnum exprType;
 };
 
