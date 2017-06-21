@@ -1,5 +1,11 @@
 #include "../inc/Expr.hpp"
 
+std::string compiler::Expr::print ( unsigned int deep ) {
+  std::ostringstream sstream;
+  sstream << std::string(deep * DEEP_STEP, DEEP_CHAR) << name << std::endl;
+  return sstream.str();
+};
+
 std::string compiler::ExprBinOp::print ( unsigned int deep ) {
   std::ostringstream sstream;
 

@@ -80,13 +80,14 @@ private:
       void checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable );
       //If res.type <=> src.type || nullptr => res.[value|type] = src.[value|type] else errType();
       void checkType ( pSymVar& res, pSymVar& src );
-      void checkFunc ( const Lexeme& lexeme, IdentifierType type, const std::string& args = "" );
+      void checkFunc ( const std::string& name, IdentifierType type, const std::string& args = "" );
 
       void checkConst( pExpr& node );
     //
 
     pStmt parseStmt ( void );
 
+    pStmt parseSimpleStmt ( void );
     pStmt parseIf ( void );
     pStmt parseWhile ( void );
     pStmt parseRepeat ( void );
@@ -94,9 +95,9 @@ private:
     pStmt parseEmpty ( void );
     pStmt parseBlock ( void );
 
-    pSym parseType ( compiler::Lexeme& lexeme, SymTable& vTable, TypeTable& tTable, InitExpected init );
-    pSym parseRecord ( void );
-    pSym parseEnum ( void );
+    pSymType parseType ( compiler::Lexeme& lexeme, SymTable& vTable, TypeTable& tTable, InitExpected init );
+    pSymType parseRecord ( void );
+    pSymType parseEnum ( void );
 
     void parseProgramName ( const compiler::Lexeme& program );
 
@@ -106,8 +107,8 @@ private:
     void parseConstExpr ( SymTable& vTable, TypeTable& tTable );
     pSymVar evalConstExpr ( pExpr& root, SymTable& vTable, TypeTable& tTable );
 
-    void parseFunction ( void );
-    void parseProcedure ( void );
+    void parseFunction ( bool expectRetVal = true );
+    // void parseProcedure ( void );
     std::tuple<pSymTable, std::string> parseParams( void );
 
     void parseAlias ( SymTable& vTable, TypeTable& tTable );

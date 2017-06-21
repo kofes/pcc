@@ -31,7 +31,7 @@ int main(int argc, char const *argv[]) {
     else
       scanner.open("test.pas");
     do {
-      scanner.nextLex();
+      scanner.next();
       lex = scanner.lex();
       std::cout << lex.row << ':'
            << lex.column << '\t'

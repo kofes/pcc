@@ -8,7 +8,7 @@
 namespace compiler {
 
 enum class NodeEnum {
-  Expr, Sym
+  Expr, Sym, Stmt
 };
 
 enum class ExprEnum {
@@ -19,14 +19,17 @@ enum class SymEnum {
   Var, Function, Scalar, Array, Record, Pointer, Alias
 };
 
+enum class StmtEnum {
+  If, While, Repeat, For, Empty, Assignment, Block, Procedure
+};
+
 const unsigned int DEEP_STEP = 3;
 const char DEEP_CHAR = ' ';
 
-struct Node : public Lexeme {
-  Node ( const Lexeme& lex ) : Lexeme(lex) {};
+struct Node {
   virtual std::string print ( unsigned int deep ) {
     std::ostringstream sstream;
-    sstream << std::string(deep * DEEP_STEP, DEEP_CHAR) << this->name << std::endl;
+    sstream << std::string(deep * DEEP_STEP, DEEP_CHAR) << "<ghost node>" << std::endl;
     return sstream.str();
   };
   NodeEnum nodeType;

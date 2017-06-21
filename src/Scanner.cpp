@@ -19,7 +19,7 @@ void compiler::Scanner::open ( const std::string& filename ) {
   lexeme.clear();
 };
 
-void compiler::Scanner::nextLex ( void ) {
+void compiler::Scanner::next ( void ) {
   if (!input.is_open())
     return;
 

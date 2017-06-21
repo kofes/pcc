@@ -25,74 +25,74 @@ enum class SCALAR_TYPE : unsigned long int {
 
 struct Sym;
 struct SymVar;
+struct SymType;
+
 typedef std::shared_ptr<Sym> pSym;
 typedef std::shared_ptr<SymVar> pSymVar;
+typedef std::shared_ptr<SymType> pSymType;
 //first: varName; second: descriptor of var
 typedef std::map< std::string, pSymVar > SymTable;
 //first: typeName; second: descriptor of type
-typedef std::map< std::string, pSym > TypeTable;
+typedef std::map< std::string, pSymType > TypeTable;
 typedef std::shared_ptr<SymTable> pSymTable;
 typedef std::shared_ptr<TypeTable> pTypeTable;
 
 struct Sym : public Node {
-  Sym ( const Lexeme& lex ) : Node(lex) { nodeType = NodeEnum::Sym; };
+  Sym ( const std::string& src ) : name(src) { nodeType = NodeEnum::Sym; };
   SymEnum symType;
+  std::string name;
 };
 
 struct SymType : public Sym {
-  SymType ( const Lexeme& lex ) : Sym(lex) {};
+  SymType ( const std::string& name = "" ) : Sym(name) {};
 };
 //TOKEN: IDENTIFIER, TAG: UNDEF, NAME: varName
 struct SymVar : public Sym {
-  SymVar ( const Lexeme& lex ) : Sym(lex) { symType = SymEnum::Var; };
+  SymVar ( const std::string& name ) : Sym(name) { symType = SymEnum::Var; };
   std::string print ( unsigned int deep ) override;
-  pSym type;
+  pSymType type;
   GLOB glob;
   std::string value;
 };
 //TOKEN: IDENTIFIER, TAG: FUNC, NAME: funcName
 struct SymFunc : public Sym {
-  SymFunc ( const Lexeme& lex ) : Sym(lex) { symType = SymEnum::Function; };
-  SymFunc ( const Lexeme& lex, const pSym& rt, const pSymTable& prms, const pNode& bd ) :
-    Sym(lex), retType(rt), params(prms), body(bd) { symType = SymEnum::Function; };
-  //TODO!
+  SymFunc ( const std::string& name ) : Sym(name) { symType = SymEnum::Function; };
   std::string print ( unsigned int deep ) override;
   pSym retType;
   pSymTable params;
   SymTable varTable;
   TypeTable typeTable;
-  pNode body;//begin->end;,... (like in GLOBAL!)
+  pNode body;
 };
 //NIL, INTEGER, REAL, CHAR, BOOLEAN
 struct TypeScalar : public SymType {
-  TypeScalar ( const Lexeme& lex ) : SymType(lex) { symType = SymEnum::Scalar; };
+  TypeScalar ( const std::string& name ) : SymType(name) { symType = SymEnum::Scalar; };
   TypeScalar ( SCALAR_TYPE tp );
+  SCALAR_TYPE type;
   std::string print ( unsigned int deep ) override;
 };
 //ARRAY: <low>...<high> of <elemType>
 struct TypeArray : public SymType {
-  TypeArray ( const Lexeme& lex ) : SymType(lex) { symType = SymEnum::Array; };
-  TypeArray ( const Lexeme& lex, const pSym& eltype, unsigned long long lw, unsigned long long hgh ) :
-    SymType(lex), elemType(eltype), low(lw), high(hgh) { symType = SymEnum::Array; };
+  TypeArray ( const std::string& name ) : SymType(name) { symType = SymEnum::Array; };
   std::string print ( unsigned int deep ) override;
   pSym elemType;
   unsigned long long low, high;
 };
 //RECORD: <v11>,...<v1N> : <type1>;...; <vM1>,...,<vMK> : <typeM>; end;
 struct TypeRecord : public SymType {
-  TypeRecord ( const Lexeme& lex, const pSymTable& tbl ) : SymType(lex), field(tbl) { symType = SymEnum::Record; };
+  TypeRecord ( const std::string& name ) : SymType(name) { symType = SymEnum::Record; };
   std::string print ( unsigned int deep ) override;
   pSymTable field;
 };
 //TAG: POINTER, NAME: nameType
 struct TypePointer : public SymType {
-  TypePointer ( const Lexeme& lex ) : SymType(lex) { symType = SymEnum::Pointer; };
+  TypePointer ( const std::string& name ) : SymType(name) { symType = SymEnum::Pointer; };
   std::string print ( unsigned int deep ) override;
   pSym elemType;
 };
 //TAG: TYPE/ALIAS, NAME: nameNewType, TYPE: what is type was copied?
 struct TypeAlias : public SymType {
-  TypeAlias ( const Lexeme& lex, const pSym& tp ) : SymType(lex), type(tp) { symType = SymEnum::Alias; };
+  TypeAlias ( const std::string& name ) : SymType(name) { symType = SymEnum::Alias; };
   std::string print ( unsigned int deep ) override;
   pSym type;
 };

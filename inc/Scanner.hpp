@@ -338,7 +338,7 @@ public:
   Scanner ( void ) : token(Token::UNDEFINED), tag(Tag::UNDEFINED), row(0), column(0) {initMap();};
   Scanner ( const std::string& filename );
   void open ( const std::string& filename );
-  void nextLex ( void );
+  void next ( void );
   Lexeme lex ( void ) const;
 private:
   void initMap ( void );

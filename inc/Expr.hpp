@@ -7,8 +7,9 @@
 
 namespace compiler {
 
-struct Expr : public Node {
-  Expr ( const Lexeme& lex ) : Node(lex) { nodeType = NodeEnum::Expr; };
+struct Expr : public Node, public Lexeme {
+  Expr ( const Lexeme& lex ) : Lexeme(lex) { nodeType = NodeEnum::Expr; };
+  virtual std::string print ( unsigned int deep );
   ExprEnum exprType;
 };
 

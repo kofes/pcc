@@ -10,53 +10,62 @@
 namespace compiler {
 
 struct Stmt : public Node {
-  Stmt ( const Lexeme& lex ) : Node(lex) {};
+  Stmt ( void ) { nodeType = NodeEnum::Stmt; }
+  StmtEnum stmtType;
 };
 
 typedef std::shared_ptr<Stmt> pStmt;
 
 struct StmtIf : public Stmt {
-  StmtIf ( const Lexeme& lex, const pExpr& cnd, const pNode& bd ) : Stmt(lex), condition(cnd), body(bd) {};
+  StmtIf ( void ) { stmtType = StmtEnum::If; };
   std::string print ( unsigned int deep ) override;
   pExpr condition;
-  pNode body;
+  pNode ifBody, elseBody;
 };
 
 struct StmtWhile : public Stmt {
-  StmtWhile ( const Lexeme& lex, const pExpr& cnd, const pNode& bd ) : Stmt(lex), condition(cnd), body(bd) {};
+  StmtWhile ( void ) { stmtType = StmtEnum::While; };
   std::string print ( unsigned int deep ) override;
   pExpr condition;
   pNode body;
 };
 
 struct StmtRepeat : public Stmt {
-  StmtRepeat ( const Lexeme& lex, const pNode& bd, const pExpr& cnd ) : Stmt(lex), body(bd), condition(cnd) {};
+  StmtRepeat ( void ) { stmtType = StmtEnum::Repeat; };
+  void add ( const pNode& nd );
   std::string print ( unsigned int deep ) override;
-  pNode body;
+  std::vector<pNode> body;
   pExpr condition;
 };
 
 struct StmtFor : public Stmt {
-  StmtFor ( const Lexeme& lex, const pNode& var, const Lexeme& init, const Lexeme& fin, const Tag& tp, const pNode& bd ) : Stmt(lex), initVal(init), finalVal(fin), type(tp), body(bd) {};
+  StmtFor ( void ) { stmtType = StmtEnum::For; };
   std::string print ( unsigned int deep ) override;
-  pNode var;
-  Lexeme initVal, finalVal;
+  Lexeme variableName;
+  pExpr initVal, finalVal;
   Tag type;
   pNode body;
 };
 
 struct StmtEmpty : public Stmt {
-  StmtEmpty ( const Lexeme& lex ) : Stmt(lex) {};
+  StmtEmpty ( void ) { stmtType = StmtEnum::Empty; };
 };
 
 struct StmtAssignment : public Stmt {
-  StmtAssignment ( const Lexeme& lex, const pSymTable& tbl ) : Stmt(lex), table(tbl) {};
+  StmtAssignment ( void ) { stmtType = StmtEnum::Assignment; };
   std::string print ( unsigned int deep ) override;
-  pSymTable table;
+  pExpr variable;
+  pExpr value;
+};
+
+struct StmtProcedure : public Stmt {
+  StmtProcedure ( void ) { stmtType = StmtEnum::Procedure; };
+  std::string print ( unsigned int deep ) override;
+  pExpr value;
 };
 
 struct StmtBlock : public Stmt {
-  StmtBlock ( const Lexeme& lex ) : Stmt(lex) {};
+  StmtBlock ( void ) { stmtType = StmtEnum::Block; };
   void add ( const pNode& nd );
   std::string print ( unsigned int deep ) override;
   std::vector<pNode> node;

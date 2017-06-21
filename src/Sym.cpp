@@ -84,10 +84,8 @@ std::string compiler::TypeScalar::print ( unsigned int deep ) {
   return sstream.str();
 };
 
-compiler::TypeScalar::TypeScalar ( SCALAR_TYPE tp ) : SymType(Lexeme()) {
+compiler::TypeScalar::TypeScalar ( SCALAR_TYPE tp ) {
   this->name = tagBook.at(static_cast<compiler::Tag>(tp));
-  this->tag = static_cast<compiler::Tag>(tp);
-  this->column = this->row = 0;
-  this->token = compiler::Token::IDENTIFIER;
+  this->type = tp;
   this->symType = SymEnum::Scalar;
 };
