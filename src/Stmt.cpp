@@ -44,6 +44,7 @@ std::string compiler::StmtRepeat::print ( unsigned int deep ) {
           << "<body>:\n";
   for (pNode& elem : body)
     sstream << elem->print(deep+2) << "\n"
+            << std::string((deep+2)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
             << "------------------\n";
   sstream << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
           << "<until>:\n"
@@ -121,6 +122,7 @@ std::string compiler::StmtBlock::print ( unsigned int deep ) {
           << "<block statement>:\n";
   for (pNode& elem : node)
     sstream << elem->print(deep+1) << "\n"
+            << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
             << "------------------\n";
   sstream << "------------------\n";
   return sstream.str();

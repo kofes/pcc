@@ -53,6 +53,7 @@ public:
   std::string printExprs ( void );
   std::string printVarTable ( void );
   std::string printFuncTable ( void );
+  std::string printTypeTable ( void );
 private:
   //parseExpr
     //Methods
@@ -77,6 +78,7 @@ private:
       void errUndefType ( void );
       void errDuplicated ( void );
       void errConstOp ( const Lexeme& lexeme );
+      void errHighLow ( const Lexeme& lexeme );
       void checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable );
       //If res.type <=> src.type || nullptr => res.[value|type] = src.[value|type] else errType();
       void checkType ( pSymVar& res, pSymVar& src );
@@ -95,9 +97,11 @@ private:
     pStmt parseEmpty ( void );
     pStmt parseBlock ( void );
 
-    pSymType parseType ( compiler::Lexeme& lexeme, SymTable& vTable, TypeTable& tTable, InitExpected init );
+    pSymType parseType ( SymTable& vTable, TypeTable& tTable, InitExpected init );
+    pSymType parseArray ( SymTable& vTable, TypeTable& tTable );
     pSymType parseRecord ( void );
     pSymType parseEnum ( void );
+    pSymType parsePointer ( void );
 
     void parseProgramName ( const compiler::Lexeme& program );
 

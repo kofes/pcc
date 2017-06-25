@@ -32,9 +32,7 @@ void compiler::Parser::parse ( void ) {
   while (true) {
     switch (scanner.lex().tag) {
       case (Tag::PROGRAM) : programTokenChecked ? err(scanner.lex()) : parseProgramName(lexeme); break;
-      //TODO!
       case (Tag::CONST) : parseConst(varTable, typeTable); break;
-      //IN WORK!
       case (Tag::TYPE) : parseAlias(varTable, typeTable); break;
       case (Tag::VAR) : parseVar(varTable, typeTable); break;
       case (Tag::FUNCTION) : parseFunction(); break;
@@ -225,75 +223,12 @@ compiler::pStmt compiler::Parser::parseBlock ( void ) {
   return block;
 };
 
-//TODO!
-compiler::pSymType compiler::Parser::parseType ( compiler::Lexeme& lexeme, SymTable& vTable, TypeTable& tTable, InitExpected init ) {
-  pSymType type;
-  std::shared_ptr<TypeArray> vArray = nullptr;
+compiler::pSymType compiler::Parser::parseType ( SymTable& vTable, TypeTable& tTable, InitExpected init ) {
+  pSymType type = nullptr;
+  Lexeme lexeme = scanner.lex();
   switch (lexeme.tag) {
     case (Tag::ARRAY) :
-      type = pSymType(new TypeArray(lexeme.name));
-      while (lexeme.tag == Tag::ARRAY) {
-
-        scanner.next();
-        lexeme = scanner.lex();
-        //ONLY STATIC ARRAY!
-        if (lexeme.tag != Tag::LEFT_BRACKET)
-          err("[");
-
-        do {
-          if (vArray == nullptr)
-            vArray = std::dynamic_pointer_cast<TypeArray>(type);
-          else {
-            lexeme.name = "ARRAY";
-            lexeme.tag = Tag::ARRAY;
-            lexeme.token = Token::IDENTIFIER;
-            vArray->elemType = pSym(new TypeArray(lexeme.name));
-            vArray = std::dynamic_pointer_cast<TypeArray>(vArray->elemType);
-          }
-          Lexeme dbg_lex = lexeme;
-
-          scanner.next();
-          lexeme = scanner.lex();
-
-          //Parse LOW
-          pExpr local_root = parseExpr(Priority::LOWEST);
-          checkConst(local_root);
-          pSymVar tmp = pSymVar(evalConstExpr(local_root, vTable, tTable));
-          if (tmp->name != "INTEGER")
-            err("integer literal/const integer");
-          vArray->low = std::strtoll(tmp->name.c_str(), nullptr, 10);
-
-          if (scanner.lex().tag != Tag::DOUBLE_DOT)
-            err("..");
-
-          scanner.next();
-          lexeme = scanner.lex();
-          //Parse HIGH
-          local_root = parseExpr(Priority::LOWEST);
-          checkConst(local_root);
-          tmp = pSymVar(evalConstExpr(local_root, vTable, tTable));
-          if (tmp->name != "INTEGER")
-            err("integer literal/const integer");
-          vArray->high = std::strtoll(tmp->name.c_str(), nullptr, 10);
-
-          if (vArray->high <= vArray->low)
-            throw ExprException("array 'high' <= 'low' from pos(" + std::to_string(dbg_lex.row) + ", " + std::to_string(dbg_lex.column) + ");");
-        } while (scanner.lex().tag == Tag::COMMA);
-
-        //ONLY STATIC ARRAY!
-        if (scanner.lex().tag != Tag::RIGHT_BRACKET)
-          err("]");
-
-        scanner.next();
-        lexeme = scanner.lex();
-
-        if (lexeme.tag != Tag::OF)
-          err("OF");
-
-        scanner.next();
-        lexeme = scanner.lex();
-
-      }
+      type = parseArray(vTable, tTable);
     break;
     // case (Tag::SET) :
     default :
@@ -321,8 +256,91 @@ compiler::pSymType compiler::Parser::parseType ( compiler::Lexeme& lexeme, SymTa
   return type;
 };
 
+compiler::pSymType compiler::Parser::parseArray ( SymTable& vTable, TypeTable& tTable ) {
+  std::shared_ptr<TypeArray> vArray = nullptr;
+  Lexeme lexeme = scanner.lex();
+  pSymType type = pSymType(new TypeArray(lexeme.name));
+  while (lexeme.tag == Tag::ARRAY) {
+    scanner.next();
+    lexeme = scanner.lex();
+    //ONLY STATIC ARRAY!
+    if (lexeme.tag == Tag::LEFT_BRACKET) {
+      do {
+        if (vArray == nullptr)
+          vArray = std::dynamic_pointer_cast<TypeArray>(type);
+        else {
+          lexeme.name = "ARRAY";
+          lexeme.tag = Tag::ARRAY;
+          lexeme.token = Token::IDENTIFIER;
+          vArray->elemType = pSym(new TypeArray(lexeme.name));
+          vArray = std::dynamic_pointer_cast<TypeArray>(vArray->elemType);
+        }
+        Lexeme dbg_lex = lexeme;
+
+        scanner.next();
+        lexeme = scanner.lex();
+
+        //Parse LOW
+        pExpr local_root = parseExpr(Priority::LOWEST);
+        checkConst(local_root);
+        pSymVar tmp = pSymVar(evalConstExpr(local_root, vTable, tTable));
+        if (tmp->name != "INTEGER") err("integer literal/const integer");
+        vArray->low = std::strtoll(tmp->name.c_str(), nullptr, 10);
+
+        if (scanner.lex().tag != Tag::DOUBLE_DOT)
+          err("..");
+
+        scanner.next();
+        lexeme = scanner.lex();
+        //Parse HIGH
+        local_root = parseExpr(Priority::LOWEST);
+        checkConst(local_root);
+        tmp = pSymVar(evalConstExpr(local_root, vTable, tTable));
+        if (tmp->name != "INTEGER") err("integer literal/const integer");
+        vArray->high = std::strtoll(tmp->name.c_str(), nullptr, 10);
+        if (vArray->high <= vArray->low)
+          errHighLow(dbg_lex);
+      } while (scanner.lex().tag == Tag::COMMA);
+
+      //ONLY STATIC ARRAY!
+      if (scanner.lex().tag != Tag::RIGHT_BRACKET) err("]");
+      scanner.next();
+      lexeme = scanner.lex();
+    } else {
+      vArray = std::dynamic_pointer_cast<TypeArray>(type);
+      vArray->high = 0;
+      vArray->low = 1;
+    }
+    if (lexeme.tag != Tag::OF) err("OF");
+    scanner.next();
+    lexeme = scanner.lex();
+  }
+  auto iter = typeTable.find(lexeme.name);
+  if (iter == typeTable.end())
+    errUndefType();
+  vArray->elemType = iter->second;
+
+  return type;
+};
+
 compiler::pSymType compiler::Parser::parseRecord ( void ) {};
 compiler::pSymType compiler::Parser::parseEnum ( void ) {};
+
+compiler::pSymType compiler::Parser::parsePointer ( void ) {
+    std::shared_ptr<TypePointer> type(new TypePointer(scanner.lex().name));
+    scanner.next();
+    Lexeme lexeme = scanner.lex();
+    auto iter = typeTable.find(lexeme.name);
+    if (iter == typeTable.end())
+      errUndefType();
+    type->elemType = iter->second;
+    scanner.next();
+    lexeme = scanner.lex();
+    if (lexeme.tag != Tag::SEMICOLON)
+      err("';'");
+
+    return type;
+};
 
 void compiler::Parser::parseProgramName ( const compiler::Lexeme& program ) {
   scanner.next();
@@ -331,7 +349,7 @@ void compiler::Parser::parseProgramName ( const compiler::Lexeme& program ) {
     err("PROGRAM NAME");
 
   std::shared_ptr<compiler::SymVar> var = std::shared_ptr<compiler::SymVar>(new SymVar(program.name));
-  var->glob = compiler::GLOB::GLOBAL;
+  var->glob = compiler::GLOB::CONST;
   var->type = std::shared_ptr<compiler::SymType>(new SymType(program.name));
   varTable[lexeme.name] = var;
 
@@ -361,7 +379,7 @@ void compiler::Parser::parseConst ( SymTable& vTable, TypeTable& tTable ) {
 
     switch (lexeme.tag) {
       case(Tag::COLON) :
-        var->type = parseType(lexeme, vTable, tTable, InitExpected::YES);
+        var->type = parseType(vTable, tTable, InitExpected::YES);
       case (Tag::EQUALS) :
       break;
       default :
@@ -419,7 +437,7 @@ void compiler::Parser::parseVar ( SymTable& vTable, TypeTable& tTable ) {
     scanner.next();
     lexeme = scanner.lex();
 
-    pSymType type = parseType(lexeme, vTable, tTable, InitExpected::MAYBE);
+    pSymType type = parseType(vTable, tTable, InitExpected::MAYBE);
 
     if (scanner.lex().tag == Tag::EQUALS) {
       if (var.size() != 1)
@@ -434,7 +452,7 @@ void compiler::Parser::parseVar ( SymTable& vTable, TypeTable& tTable ) {
 
     for (pSymVar& elem : var) {
       elem->type = type;
-      elem->glob = compiler::GLOB::GLOBAL;
+      elem->glob = compiler::GLOB::VAR;
       vTable[elem->name] = elem;
     }
     var.clear();
@@ -473,7 +491,7 @@ void compiler::Parser::parseFunction ( bool expectRetVal ) {
     scanner.next();
     lexeme = scanner.lex();
 
-    func->retType = parseType(lexeme, varTable, typeTable, InitExpected::NO);
+    func->retType = parseType(varTable, typeTable, InitExpected::NO);
   } else
     if (lexeme.tag != Tag::SEMICOLON)
       err("';'");
@@ -514,7 +532,6 @@ void compiler::Parser::parseFunction ( bool expectRetVal ) {
 void compiler::Parser::parseAlias ( SymTable& vTable, TypeTable& tTable ) {
   scanner.next();
   compiler::Lexeme lexeme = scanner.lex();
-  // checkIdent(lexeme, vTable, tTable);
 
   while (lexeme.token == Token::IDENTIFIER && lexeme.tag == Tag::UNDEFINED) {
 
@@ -534,9 +551,10 @@ void compiler::Parser::parseAlias ( SymTable& vTable, TypeTable& tTable ) {
     lexeme = scanner.lex();
 
     switch (lexeme.tag) {
-      case (Tag::RECORD): type = parseRecord();
-      case (Tag::LEFT_PARENTHESIS): type = parseEnum();
-      default: type = parseType(lexeme, vTable, tTable, InitExpected::NO);
+      case (Tag::RECORD): type = parseRecord(); break;
+      case (Tag::LEFT_PARENTHESIS): type = parseEnum(); break;
+      case (Tag::POINTER): type = parsePointer(); break;
+      default: type = parseType(vTable, tTable, InitExpected::NO); break;
     }
 
     //NOW scanner.lex().name == ";"
@@ -646,6 +664,8 @@ std::string compiler::Parser::print ( void ) {
 
   out << "<FUNC TABLE>\n"
       << printFuncTable()
+      << "<TYPE TABLE>\n"
+      << printTypeTable()
       << "<VAR TABLE>\n"
       << printVarTable()
       << "<MAIN BLOCK>\n"
@@ -679,6 +699,14 @@ std::string compiler::Parser::printFuncTable ( void ) {
       out << elem.second->print(0) << '\n';
 
   return out.str();
+};
+
+std::string compiler::Parser::printTypeTable ( void ) {
+    std::ostringstream out;
+    for (const std::pair< std::string, pSymType >& type : typeTable)
+        out << type.first << ':' << type.second->print(0) << '\n';
+
+    return out.str();
 };
 
 std::vector<compiler::pExpr> compiler::Parser::parseArgs ( void ) {
@@ -736,6 +764,10 @@ void compiler::Parser::errDuplicated ( void ) {
   compiler::Lexeme lexeme = scanner.lex();
   throw ExprException("Duplicate identifier \"" + lexeme.name + "\" in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
 };
+
+void compiler::Parser::errHighLow ( const compiler::Lexeme& lexeme ) {
+  throw ExprException("array 'high' <= 'low' from pos(" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
+}
 
 void compiler::Parser::checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable ) {
   if (lexeme.token != Token::IDENTIFIER || lexeme.tag != Tag::UNDEFINED)
@@ -796,13 +828,95 @@ void compiler::Parser::setVarTable ( void ) {
 };
 
 //TODO!
-compiler::pSymVar compiler::Parser::evalConstExpr ( pExpr& root, SymTable& vTable, TypeTable& tTable ) {
-
-};
+compiler::pSymVar compiler::Parser::evalConstExpr ( pExpr& root, SymTable& vTable, TypeTable& tTable ) {};
 
 //TODO!
 std::tuple<compiler::pSymTable, std::string> compiler::Parser::parseParams( void ) {
+  Lexeme lexeme = scanner.lex();
+  pSymTable resTable(new SymTable);
+  std::ostringstream sstream;
 
+  while ((lexeme.token == Token::IDENTIFIER && lexeme.tag == Tag::UNDEFINED) ||
+         lexeme.tag == Tag::CONST ||
+         lexeme.tag == Tag::VAR) {
+    GLOB glob;
+    glob = GLOB::VAL_PARAM;
+    if (lexeme.tag == Tag::CONST) {
+      glob = GLOB::CONST_PARAM;
+      scanner.next();
+    }
+    if (lexeme.tag == Tag::VAR) {
+      glob = GLOB::VAR_PARAM;
+      scanner.next();
+    }
+    if (lexeme.tag == Tag::OUT) {
+      glob = GLOB::OUT_PARAM;
+      scanner.next();
+    }
+    lexeme = scanner.lex();
+    if (lexeme.token != Token::IDENTIFIER || lexeme.tag != Tag::UNDEFINED)
+      err("`parameter`");
+    std::vector<pSymVar> vars;
+    do {
+      vars.push_back(pSymVar(new SymVar(lexeme.name)));
+      scanner.next();
+      lexeme = scanner.lex();
+    } while (lexeme.tag == Tag::COMMA);
+    pSymType type;
+    //CONST
+    if (glob == GLOB::CONST_PARAM) {
+      if (lexeme.tag == Tag::COLON) {
+        scanner.next();
+        type = parseType(varTable, typeTable, InitExpected::MAYBE);
+        lexeme = scanner.lex();
+        if (lexeme.tag == Tag::EQUALS) {
+          if (vars.size() > 1)  err("';'");
+          scanner.next();
+          pExpr local_root = parseExpr(Priority::LOWEST);
+          checkConst(local_root);
+          pSymVar tmp = pSymVar(evalConstExpr(local_root, varTable, typeTable));
+          checkType(vars.front(), tmp);
+        }
+      }
+    }
+    //VALUE
+    if (glob == GLOB::VAL_PARAM) {
+      if (lexeme.tag != Tag::COLON) err("':'");
+      scanner.next();
+      type = parseType(varTable, typeTable, InitExpected::MAYBE);
+      lexeme = scanner.lex();
+      if (lexeme.tag == Tag::EQUALS) {
+        if (vars.size() > 1)  err("';'");
+        scanner.next();
+        pExpr local_root = parseExpr(Priority::LOWEST);
+        checkConst(local_root);
+        pSymVar tmp = pSymVar(evalConstExpr(local_root, varTable, typeTable));
+        checkType(vars.front(), tmp);
+      }
+    }
+    //VAR/OUT
+    if (lexeme.tag == Tag::VAR || lexeme.tag == Tag::OUT) {
+      if (lexeme.tag == Tag::COLON) {
+        scanner.next();
+        type = parseType(varTable, typeTable, InitExpected::NO);
+      }
+    }
+    //resTable < vars, resStr < str
+    sstream << vars.size() << ':' << type->name << ';';
+    for (pSymVar& elem : vars) {
+      elem->type = type;
+      elem->glob = glob;
+      (*resTable)[elem->name] = elem;
+    }
+    vars.clear();
+    lexeme = scanner.lex();
+    if (lexeme.tag == Tag::SEMICOLON)
+      scanner.next();
+  }
+  if (lexeme.tag != Tag::RIGHT_PARENTHESIS)
+    err(")");
+
+  return std::make_tuple(resTable, sstream.str());
 };
 
 //TODO!
@@ -850,5 +964,4 @@ void compiler::Parser::checkConst( pExpr& node ) {
 };
 
 //TODO!
-void compiler::Parser::checkFunc ( const std::string& name, IdentifierType type, const std::string& args ) {
-};
+void compiler::Parser::checkFunc ( const std::string& name, IdentifierType type, const std::string& args ) {};

@@ -530,6 +530,7 @@ void compiler::Scanner::initMap ( void ) {
   book["OF"] = std::make_pair(Token::IDENTIFIER, Tag::OF);
   book["ON"] = std::make_pair(Token::IDENTIFIER, Tag::ON);
   book["OPERATOR"] = std::make_pair(Token::IDENTIFIER, Tag::OPERATOR);
+  book["OUT"] = std::make_pair(Token::IDENTIFIER, Tag::OUT);
   book["ELSE"] = std::make_pair(Token::IDENTIFIER, Tag::ELSE);
   book["OVERRIDE"] = std::make_pair(Token::IDENTIFIER, Tag::OVERRIDE);
   book["PACKED"] = std::make_pair(Token::IDENTIFIER, Tag::PACKED);

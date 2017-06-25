@@ -9,10 +9,12 @@
 namespace compiler {
 
 enum class GLOB : char {
-  PARAM = 'P',
+  VAR_PARAM = 'v',
+  CONST_PARAM = 'c',
+  OUT_PARAM = 'o',
+  VAL_PARAM = 'p',
   CONST = 'C',
-  LOCAL = 'L',
-  GLOBAL = 'G'
+  VAR = 'V'
 };
 
 enum class SCALAR_TYPE : unsigned long int {
@@ -48,7 +50,7 @@ struct SymType : public Sym {
 };
 //TOKEN: IDENTIFIER, TAG: UNDEF, NAME: varName
 struct SymVar : public Sym {
-  SymVar ( const std::string& name ) : Sym(name) { symType = SymEnum::Var; };
+  SymVar ( const std::string& name = "" ) : Sym(name) { symType = SymEnum::Var; };
   std::string print ( unsigned int deep ) override;
   pSymType type;
   GLOB glob;
@@ -76,7 +78,7 @@ struct TypeArray : public SymType {
   TypeArray ( const std::string& name ) : SymType(name) { symType = SymEnum::Array; };
   std::string print ( unsigned int deep ) override;
   pSym elemType;
-  unsigned long long low, high;
+  size_t low, high;
 };
 //RECORD: <v11>,...<v1N> : <type1>;...; <vM1>,...,<vMK> : <typeM>; end;
 struct TypeRecord : public SymType {
