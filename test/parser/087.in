@@ -1,0 +1,5 @@
+type
+	rc = record
+		x,y,z : real;
+		id : char = 'c';
+	end

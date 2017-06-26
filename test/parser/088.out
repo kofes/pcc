@@ -1,17 +1,18 @@
 <function table>
-   <function><name>BAR</name>
-      <return type>INTEGER</return type>
-      <params>
-         <param>ID:p:^(BOOLEAN):NIL</param>
-      </params>
-      <body>
-      </body>
-   </function>
 </function table>
 <type table>
    <type>BOOLEAN</type>
    <type>CHAR</type>
    <type>INTEGER</type>
+   <type>
+      RC=
+         <record>
+            <field>ID:V:CHAR:c</field>
+            <field>X:V:REAL</field>
+            <field>Y:V:REAL</field>
+            <field>Z:V:REAL</field>
+         </record>
+   </type>
    <type>REAL</type>
 </type table>
 <var table>

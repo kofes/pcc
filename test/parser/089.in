@@ -1,0 +1,11 @@
+type
+	rc = record
+		x,y,z : real;
+		ch : char;
+	end;
+
+var
+	id : rc;
+
+begin
+end

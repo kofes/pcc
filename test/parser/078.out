@@ -1,22 +1,25 @@
-<func table>:
-<procedure>:FOO
-   <body>:
-   <end>
-
-<function>:FOO
-   <return's type>:
-      INTEGER
-   <params>:
-      V:v:INTEGER:
-   <body>:
-   <end>
-
-<type table>:
-BOOLEAN
-CHAR
-INTEGER
-REAL
-<var table>:
-PI:C:REAL:3.1415926535897932385
-<block statement>:
-------------------
+<function table>
+   <procedure><name>FOO</name>
+      <body>
+      </body>
+   </procedure>
+   <function><name>FOO</name>
+      <return type>INTEGER</return type>
+      <params>
+         <param>V:v:INTEGER</param>
+      </params>
+      <body>
+      </body>
+   </function>
+</function table>
+<type table>
+   <type>BOOLEAN</type>
+   <type>CHAR</type>
+   <type>INTEGER</type>
+   <type>REAL</type>
+</type table>
+<var table>
+   <var>PI:C:REAL:3.1415926535897932385</var>
+</var table>
+<block statement>
+</block statement>

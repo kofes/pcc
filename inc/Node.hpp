@@ -3,7 +3,7 @@
 #include "Scanner.hpp"
 #include <sstream>
 #include <memory>
-
+#include <exception>
 
 namespace compiler {
 
@@ -20,11 +20,19 @@ enum class SymEnum {
 };
 
 enum class StmtEnum {
-  If, While, Repeat, For, Empty, Assignment, Block, Procedure
+  If, While, Repeat, For, Empty, Assignment, Block, Procedure, Break, Continue
 };
 
 const unsigned int DEEP_STEP = 3;
 const char DEEP_CHAR = ' ';
+
+struct ExprException : public std::exception {
+  ExprException ( void ) : err("Illegal expression") {};
+  ExprException ( const std::string& str ) : err(str) {};
+  const char* what() const noexcept {return err.c_str();};
+private:
+  std::string err;
+};
 
 struct Node {
   virtual std::string print ( unsigned int deep ) {

@@ -3,7 +3,6 @@
 #include <memory>
 #include <vector>
 #include <unordered_map>
-#include <exception>
 #include <sstream>
 #include <algorithm>
 #include <tuple>
@@ -15,14 +14,6 @@
 
 #include "CompileTimeFunctions.hpp"
 
-struct ExprException : public std::exception {
-  ExprException ( void ) : err("Illegal expression") {};
-  ExprException ( const std::string& str ) : err(str) {};
-  const char* what() const noexcept {return err.c_str();};
-private:
-  std::string err;
-};
-
 namespace compiler {
 //ParseExpr-enum
 enum class Priority : unsigned short {
@@ -31,12 +22,6 @@ enum class Priority : unsigned short {
   THIRD = 2,
   LOWEST = 3
 };
-
-// enum class InitExpected {
-//   NO,
-//   YES,
-//   MAYBE
-// };
 
 enum class IdentifierType {
   VARIABLE, FUNCTION, TYPE
@@ -81,7 +66,6 @@ private:
       void errConstOp ( const Lexeme& lexeme );
       void errHighLow ( const Lexeme& lexeme );
       void checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable );
-      //If res.type <=> src.type || nullptr => res.[value|type] = src.[value|type] else errType();
       pSymVar checkType ( pSymVar res, pSymType type, pExpr src );
       void checkFunc ( const Lexeme& name, IdentifierType type, const std::string& args = "" );
 
@@ -98,9 +82,12 @@ private:
     pStmt parseEmpty ( void );
     pStmt parseBlock ( void );
 
-    pSymType parseType ( SymTable& vTable, TypeTable& tTable/*, InitExpected init*/ );
+    pStmt parseBreak ( void );
+    pStmt parseContinue ( void );
+
+    pSymType parseType ( SymTable& vTable, TypeTable& tTable );
     pSymType parseArray ( SymTable& vTable, TypeTable& tTable );
-    pSymType parseRecord ( void );
+    pSymType parseRecord ( SymTable& vTable, TypeTable& tTable );
     pSymType parseEnum ( void );
     pSymType parsePointer ( SymTable& vTable, TypeTable& tTable );
 

@@ -14,12 +14,12 @@ void doUnOp ( compiler::Tag tag, compiler::pExpr& value ) {
           value->name = std::to_string(-std::stod(value->name));
         break;
         case (compiler::Tag::POINTER):
-          throw ExprException("sub with pointer at pos(" + std::to_string(value->row) + ", " + std::to_string(value->column) + ");");
+          throw compiler::ExprException("sub with pointer at pos(" + std::to_string(value->row) + ", " + std::to_string(value->column) + ");");
         break;
         case (compiler::Tag::B_FALSE): break;
         case (compiler::Tag::B_TRUE): break;
         default:
-          throw ExprException("sub with `bad value` at pos(" + std::to_string(value->row) + ", " + std::to_string(value->column) + ");");
+          throw compiler::ExprException("sub with `bad value` at pos(" + std::to_string(value->row) + ", " + std::to_string(value->column) + ");");
         break;
       }
     break;
@@ -29,10 +29,10 @@ void doUnOp ( compiler::Tag tag, compiler::pExpr& value ) {
           value->name = std::to_string(~std::stoll(value->name));
         break;
         case (compiler::Tag::FLOAT):
-          throw ExprException("not with float at pos(" + std::to_string(value->row) + ", " + std::to_string(value->column) + ");");
+          throw compiler::ExprException("not with float at pos(" + std::to_string(value->row) + ", " + std::to_string(value->column) + ");");
         break;
         case (compiler::Tag::POINTER):
-          throw ExprException("not with pointer at pos(" + std::to_string(value->row) + ", " + std::to_string(value->column) + ");");
+          throw compiler::ExprException("not with pointer at pos(" + std::to_string(value->row) + ", " + std::to_string(value->column) + ");");
         break;
         case (compiler::Tag::B_FALSE):
           value->tag = compiler::Tag::B_TRUE;
@@ -43,12 +43,12 @@ void doUnOp ( compiler::Tag tag, compiler::pExpr& value ) {
           value->name = "false";
         break;
         default:
-          throw ExprException("not with `bad value` at pos(" + std::to_string(value->row) + ", " + std::to_string(value->column) + ");");
+          throw compiler::ExprException("not with `bad value` at pos(" + std::to_string(value->row) + ", " + std::to_string(value->column) + ");");
         break;
       }
     break;
     default:
-      throw ExprException("unary with `bad value` operation at pos(" + std::to_string(value->row) + ", " + std::to_string(value->column) + ");");
+      throw compiler::ExprException("unary with `bad value` operation at pos(" + std::to_string(value->row) + ", " + std::to_string(value->column) + ");");
     break;
   }
 };
@@ -79,7 +79,7 @@ compiler::pExpr doBinOp ( compiler::Tag oper, const compiler::pExpr& left, const
     case (compiler::Tag::SHR):
     break;
     default:
-      throw ExprException("wrong binary operation");
+      throw compiler::ExprException("wrong binary operation");
   }
   return res;
 };

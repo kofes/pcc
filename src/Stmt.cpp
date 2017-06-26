@@ -24,13 +24,20 @@ std::string compiler::StmtWhile::print ( unsigned int deep ) {
   std::ostringstream sstream;
 
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<while statement>:\n"
+          << "<while statement>\n"
           << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<condition>:\n"
+          << "<condition>\n"
           << condition->print(deep+2) << "\n"
           << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<body>:\n"
-          << body->print(deep+2);
+          << "</condition>\n"
+          << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "<body>\n"
+          << body->print(deep+2)
+          << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</body>\n"
+          << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</while statement>";
+
 
   return sstream.str();
 };
@@ -39,16 +46,16 @@ std::string compiler::StmtRepeat::print ( unsigned int deep ) {
   std::ostringstream sstream;
 
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<repeat statement>:\n"
-          << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<body>:\n";
+          << "<repeat statement>\n";
   for (pNode& elem : body)
-    sstream << elem->print(deep+2) << "\n"
-            << std::string((deep+2)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-            << "------------------\n";
+    sstream << elem->print(deep+2) << "\n";
   sstream << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<until>:\n"
-          << condition->print(deep+2);
+          << "<until>\n"
+          << condition->print(deep+2)
+          << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</until>\n"
+          << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</repeat statement>";
 
   return sstream.str();
 };
@@ -61,29 +68,42 @@ std::string compiler::StmtFor::print ( unsigned int deep ) {
   std::ostringstream sstream;
 
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<for statement>:\n"
+          << "<for statement>\n"
           //
           << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
           << "<control variable>:\n"
           << std::string((deep+2)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
           << variableName.name << '\n'
+          << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</control variable>:\n"
           //
           << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<type>:\n"
+          << "<type>\n"
           << std::string((deep+2)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
           << compiler::tagBook.at(type) << '\n'
+          << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</type>\n"
           //
           << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
           << "<initial value>:\n"
           << initVal->print(deep+2) << '\n'
+          << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</initial value>:\n"
           //
           << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<final value>:\n"
+          << "<final value>\n"
           << finalVal->print(deep+2) << '\n'
+          << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</final value>\n"
           //
           << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<body>:\n"
-          << body->print(deep+2);
+          << "<body>\n"
+          << body->print(deep+2)
+          << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</body>\n"
+          //
+          << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</for statement>";
 
   return sstream.str();
 };
@@ -92,13 +112,19 @@ std::string compiler::StmtAssignment::print ( unsigned int deep) {
   std::ostringstream sstream;
 
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<assignment statement>:\n"
+          << "<assignment statement>\n"
           << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<variable>:\n"
+          << "<variable>\n"
           << variable->print(deep+2) << "\n"
           << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<value>:\n"
-          << value->print(deep+2);
+          << "</variable>\n"
+          << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "<value>\n"
+          << value->print(deep+2) << '\n'
+          << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</value>\n"
+          << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</assignment statement>";
 
   return sstream.str();
 };
@@ -107,11 +133,29 @@ std::string compiler::StmtProcedure::print ( unsigned int deep ) {
   std::ostringstream sstream;
 
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<procedure calling>:\n"
+          << "<procedure calling>\n"
           << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<value>:\n"
-          << value->print(deep+2);
+          << "<value>\n"
+          << value->print(deep+2) << '\n'
+          << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</value>\n"
+          << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "</procedure calling>";
 
+  return sstream.str();
+};
+
+std::string compiler::StmtBreak::print ( unsigned int deep ) {
+  std::ostringstream sstream;
+  sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "<break stmt/>";
+  return sstream.str();
+};
+
+std::string compiler::StmtContinue::print ( unsigned int deep ) {
+  std::ostringstream sstream;
+  sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "<continue stmt/>";
   return sstream.str();
 };
 
@@ -119,12 +163,12 @@ std::string compiler::StmtBlock::print ( unsigned int deep ) {
   std::ostringstream sstream;
 
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "<block statement>:\n";
+          << "<block statement>\n";
   for (pNode& elem : node)
-    sstream << elem->print(deep+1) << "\n"
-            << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-            << "------------------\n";
-  sstream << "------------------\n";
+    sstream << elem->print(deep+1) << "\n";
+            // << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+            // << "------------------\n";
+  sstream << "</block statement>\n";
   return sstream.str();
 };
 

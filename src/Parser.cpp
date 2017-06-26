@@ -72,12 +72,14 @@ compiler::pStmt compiler::Parser::parseStmt ( void ) {
     case (Tag::FOR) : return parseFor();
     case (Tag::SEMICOLON) : return parseEmpty();
     case (Tag::BEGIN) : return parseBlock();
+    case (Tag::BREAK):
+      return parseBreak();
+    case (Tag::CONTINUE):
+      return parseContinue();
     case (Tag::WRITELN):
     case (Tag::WRITE):
     case (Tag::READ):
     case (Tag::READLN):
-    case (Tag::BREAK):
-    case (Tag::CONTINUE):
     case (Tag::IDENTIFIER):
       return parseSimpleStmt();
     default : break;
@@ -113,6 +115,28 @@ compiler::pStmt compiler::Parser::parseSimpleStmt ( void ) {
   scanner.next();
 
   return procStmt;
+};
+
+compiler::pStmt compiler::Parser::parseBreak ( void ) {
+  std::shared_ptr<StmtBreak> stmt(new StmtBreak);
+  Lexeme lexeme;
+  scanner.next();
+  lexeme = scanner.lex();
+  if (lexeme.tag != Tag::SEMICOLON)
+    err("';'");
+  scanner.next();
+  return stmt;
+};
+
+compiler::pStmt compiler::Parser::parseContinue ( void ) {
+  std::shared_ptr<StmtContinue> stmt(new StmtContinue);
+  Lexeme lexeme;
+  scanner.next();
+  lexeme = scanner.lex();
+  if (lexeme.tag != Tag::SEMICOLON)
+    err("';'");
+  scanner.next();
+  return stmt;
 };
 
 compiler::pStmt compiler::Parser::parseIf ( void ) {
@@ -267,8 +291,8 @@ compiler::pSymType compiler::Parser::parseType ( SymTable& vTable, TypeTable& tT
 
 compiler::pSymType compiler::Parser::parseArray ( SymTable& vTable, TypeTable& tTable ) {
   std::shared_ptr<TypeArray> vArray = nullptr;
+  pSymType type = pSymType(new TypeArray("ARRAY"));
   Lexeme lexeme = scanner.lex();
-  pSymType type = pSymType(new TypeArray(lexeme.name));
   while (lexeme.tag == Tag::ARRAY) {
     scanner.next();
     lexeme = scanner.lex();
@@ -336,7 +360,94 @@ compiler::pSymType compiler::Parser::parseArray ( SymTable& vTable, TypeTable& t
   return type;
 };
 
-compiler::pSymType compiler::Parser::parseRecord ( void ) {};
+compiler::pSymType compiler::Parser::parseRecord ( SymTable& vTable, TypeTable& tTable ) {
+  std::shared_ptr<TypeRecord> vRecord(new TypeRecord("RECORD"));
+  std::vector<pSymVar> var;
+  vRecord->field = pSymTable(new SymTable);
+
+  scanner.next();
+  Lexeme lexeme = scanner.lex();
+
+  if (lexeme.tag != Tag::IDENTIFIER)
+    err("`identifier`");
+  for (;lexeme.tag == Tag::IDENTIFIER; scanner.next(), lexeme = scanner.lex()) {
+    //Check in field
+    vRecord->checkIdent(lexeme);
+    var.push_back(pSymVar(new SymVar(lexeme.name)));
+
+    scanner.next();
+    lexeme = scanner.lex();
+
+    for (;lexeme.tag == Tag::COMMA; scanner.next(), lexeme = scanner.lex()) {
+      scanner.next();
+      lexeme = scanner.lex();
+
+      vRecord->checkIdent(lexeme);
+      var.push_back(pSymVar(new SymVar(lexeme.name)));
+    }
+
+    if (lexeme.tag != Tag::COLON)
+      err("':'");
+
+    scanner.next();
+    pSymType type = parseType(vTable, tTable);
+    lexeme = scanner.lex();
+    if (lexeme.tag != Tag::EQUALS && lexeme.tag != Tag::SEMICOLON)
+      err("';'");
+    if (scanner.lex().tag == Tag::EQUALS) {
+      if (var.size() != 1)
+        err("';'");
+      if (type->symType == SymEnum::Array) {
+        if (std::dynamic_pointer_cast<TypeArray>(type)->elemType->symType == SymEnum::Array ||
+            std::dynamic_pointer_cast<TypeArray>(type)->low >
+            std::dynamic_pointer_cast<TypeArray>(type)->high)
+          err("';'");
+        //Now only 1D massives
+        scanner.next();
+        lexeme = scanner.lex();
+        if (lexeme.tag != Tag::LEFT_PARENTHESIS)
+          err("'('");
+        scanner.next();
+        lexeme = scanner.lex();
+        std::shared_ptr<TypeArray> arr = std::dynamic_pointer_cast<TypeArray>(type);
+        //allocate only for 1D massive for initizalization!
+        if (!std::dynamic_pointer_cast<TypeArray>(arr)->values.size())
+          arr->values.resize(arr->high - arr->low + 1);
+        for (unsigned long long i = arr->low; i <= arr->high; ++i, scanner.next(), lexeme = scanner.lex()) {
+          pExpr local_root = parseExpr(Priority::LOWEST);
+          pExpr tmp = evalConstExpr(local_root, vTable, tTable);
+          //TODO: check type of tmp end evaluate to array
+          arr->values[i-arr->low] = checkType(arr->values[i-arr->low], arr->elemType, tmp);
+          lexeme = scanner.lex();
+          if (i < arr->high && lexeme.tag != Tag::COMMA)
+            err("','");
+          if (i == arr->high && lexeme.tag != Tag::RIGHT_PARENTHESIS)
+            err("')'");
+        }
+      } else {
+        scanner.next();
+        lexeme = scanner.lex();
+        pExpr local_root = parseExpr(Priority::LOWEST);
+        pExpr tmp = evalConstExpr(local_root, vTable, tTable);
+        var.front() = checkType(var.front(), var.front()->type, tmp);
+      }
+    }
+
+    for (pSymVar& elem : var) {
+      elem->type = type;
+      elem->glob = compiler::GLOB::VAR;
+      vRecord->field->emplace(elem->name, elem);
+    }
+    var.clear();
+    if (scanner.lex().tag != Tag::SEMICOLON)
+      err("';'");
+  }
+  if (scanner.lex().tag != Tag::END)
+    err("END");
+  scanner.next();
+  return vRecord;
+};
+
 compiler::pSymType compiler::Parser::parseEnum ( void ) {};
 
 compiler::pSymType compiler::Parser::parsePointer ( SymTable& vTable, TypeTable& tTable ) {
@@ -596,7 +707,7 @@ void compiler::Parser::parseAlias ( SymTable& vTable, TypeTable& tTable ) {
 
     switch (lexeme.tag) {
       // case (Tag::ARRAY): alias->type = parseArray(vTable, tTable); break;
-      case (Tag::RECORD): alias->type = parseRecord(); break;
+      case (Tag::RECORD): alias->type = parseRecord(vTable, tTable); break;
       case (Tag::LEFT_PARENTHESIS): alias->type = parseEnum(); break;
       // case (Tag::POINTER): alias->type = parsePointer(vTable, tTable); break;
       default:
@@ -720,13 +831,15 @@ compiler::pExpr compiler::Parser::parseIdentifier ( compiler::Lexeme lexeme ) {
 std::string compiler::Parser::print ( void ) {
   std::ostringstream out;
 
-  out << "<func table>:\n"
+  out << "<function table>\n"
       << printFuncTable()
-      << "<type table>:\n"
+      << "</function table>\n"
+      << "<type table>\n"
       << printTypeTable()
-      << "<var table>:\n"
+      << "</type table>\n"
+      << "<var table>\n"
       << printVarTable()
-      // << "<main block>:\n"
+      << "</var table>\n"
       << printExprs();
 
   return out.str();
@@ -745,7 +858,8 @@ std::string compiler::Parser::printExprs ( void ) {
 std::string compiler::Parser::printVarTable ( void ) {
   std::ostringstream out;
   for (const std::pair< std::string, pSymVar >& elem : varTable)
-    out << elem.second->print(0) << '\n';
+    out << std::string(compiler::DEEP_STEP, compiler::DEEP_CHAR)
+        << "<var>" << elem.second->print(0) << "</var>\n";
 
   return out.str();
 };
@@ -754,17 +868,26 @@ std::string compiler::Parser::printFuncTable ( void ) {
   std::ostringstream out;
   for (const std::pair< std::string, std::map< std::string, pSym> >& functions : funcTable)
     for (const std::pair< std::string, pSym>& elem : functions.second)
-      out << elem.second->print(0) << '\n';
+      out << elem.second->print(1) << '\n';
 
   return out.str();
 };
 
 std::string compiler::Parser::printTypeTable ( void ) {
-    std::ostringstream out;
-    for (const std::pair< std::string, pSymType >& type : typeTable)
-        out << type.second->print(0) << '\n';
+  std::ostringstream out;
+  for (const std::pair< std::string, pSymType >& type : typeTable) {
+    if (type.second->symType == SymEnum::Alias &&
+      std::dynamic_pointer_cast<TypeAlias>(type.second)->type->symType == SymEnum::Record)
+        out << std::string(compiler::DEEP_STEP, compiler::DEEP_CHAR)
+            << "<type>\n" << type.second->print(2) << '\n'
+            << std::string(compiler::DEEP_STEP, compiler::DEEP_CHAR)
+            << "</type>\n";
+    else
+      out << std::string(compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "<type>" << type.second->print(0) << "</type>\n";
+  }
 
-    return out.str();
+  return out.str();
 };
 
 std::vector<compiler::pExpr> compiler::Parser::parseArgs ( void ) {

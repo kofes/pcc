@@ -86,6 +86,7 @@ struct TypeRecord : public SymType {
   TypeRecord ( const std::string& name ) : SymType(name) { symType = SymEnum::Record; };
   std::string print ( unsigned int deep ) override;
   pSymTable field;
+  void checkIdent ( const compiler::Lexeme& lexeme );
 };
 //TAG: POINTER, NAME: nameType
 struct TypePointer : public SymType {

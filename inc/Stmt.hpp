@@ -64,6 +64,16 @@ struct StmtProcedure : public Stmt {
   pExpr value;
 };
 
+struct StmtBreak : public Stmt {
+  StmtBreak ( void ) { stmtType = StmtEnum::Break; };
+  std::string print ( unsigned int deep ) override;
+};
+
+struct StmtContinue : public Stmt {
+  StmtContinue ( void ) { stmtType = StmtEnum::Continue; };
+  std::string print ( unsigned int deep ) override;
+};
+
 struct StmtBlock : public Stmt {
   StmtBlock ( void ) { stmtType = StmtEnum::Block; };
   void add ( const pNode& nd );
