@@ -3,11 +3,18 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include <queue>
+#include <list>
 #include <string>
 #include <sstream>
 //namespace compiler::asm
 namespace compiler {
+
+const static int MAIN_WORD_SIZE = 8;
+const static std::string MAIN_WORD_STR = "qword";
+const static std::string DEFINE_NUM = "dq";
+const static std::string DEFINE_CHAR = "db";
+const static std::string FORMAT_INT = "formatInt";
+const static std::string FORMAT_FLOAT = "formatFloat";
 
 enum class RegisterEnum {
   rax_,
@@ -227,7 +234,7 @@ private:
 struct Mem : public Operand {
   Mem (const std::string& name, int offset = 0) : operand_(new ImmString(name)), offset_(offset) {};
   Mem (RegisterEnum reg, int offset = 0) : operand_(new Reg(reg)), offset_(offset) {};
-  Mem (const Mem& src) : operand_(src.operand_), offset_(src.offset_), size_("qword") {};
+  Mem (const Mem& src) : operand_(src.operand_), offset_(src.offset_), size_(MAIN_WORD_STR) {};
   Mem (pOperand src);
   std::string name() override;
   OperandEnum operandType() override { return OperandEnum::mem_; };
@@ -250,14 +257,14 @@ protected:
 
 struct Int : public Data {
   Int (const std::string& name, int val) : Data(name), val_(val) {};
-  std::string name() override { return name_ + ": dq " + std::to_string(val_); };
+  std::string name() override { return name_ + ": " + DEFINE_NUM + " " + std::to_string(val_); };
 private:
   int val_;
 };
 
 struct Float : public Data {
   Float (const std::string& name, double val) : Data(name), val_(val) {};
-  std::string name() override { return name_ + ": dq " + std::to_string(val_); };
+  std::string name() override { return name_ + ": " + DEFINE_NUM + " " + std::to_string(val_); };
 private:
   double val_;
 };
@@ -271,7 +278,7 @@ private:
 
 struct String : public Data {
   String (const std::string& name, std::string val) : Data(name), val_(val) {};
-  std::string name() override { return name_ + ": db " + val_ + ", 0"; };
+  std::string name() override { return name_ + ": " + DEFINE_CHAR + " " + val_ + ", 0"; };
 private:
     std::string val_;
 };
@@ -312,31 +319,31 @@ public:
   Generator();
   std::string print();
   void addCmd(pCmd cmd);
-  void addInt();
+  void writeInt();
   void addLine();
-  void addFloat();
-  void addString(const std::string& src);
+  void writeFloat();
+  void writeString(const std::string& src);
   void addData(const std::string& name, const std::string& src);
   void addData(const std::string& name, int val);
   void addData(const std::string& name, double val);
   void addArray(const std::string& name, int size);
-  void addLabel(const std::string& name);
-  std::string varName(const std::string& name);
-  std::string genVar();
-  std::string genLabel();
+  void addLabel(const std::string& name) { addCmd(pCmd(new Label(name))); };
+  std::string varName(const std::string& name) { return "var" + name; };
+  std::string genVar() { return "var" + std::to_string(countNames++); };
+  std::string genLabel() { return "L" + std::to_string(countLabels++); };
   pOperand operandAdress(const std::string& name, int offset = 0);
   pOperand operandAdress(RegisterEnum reg, int offset = 0);
   void addContinue(const std::string& name);
   void addBreak(const std::string& name);
-  void rmContinue();
-  void rmBreak();
+  void rmContinue() { continues.pop_back(); };
+  void rmBreak() { breaks.pop_back(); };
   std::string continueName();
   std::string breakName();
 protected:
-  void addWrite(const std::string& format);
+  void write(const std::string& format);
   std::vector<pCmd> cmds;
   std::vector<pData> data;
-  std::queue<std::string> continues, breaks;
+  std::list<std::string> continues, breaks;
   size_t countNames, countPushes, countLabels;
 };
 
