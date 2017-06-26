@@ -66,7 +66,7 @@ private:
       void errConstOp ( const Lexeme& lexeme );
       void errHighLow ( const Lexeme& lexeme );
       void checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable );
-      pSymVar checkType ( pSymVar res, pSymType type, pExpr src );
+      pSymVar checkType ( pSymVar res, pSymType type, pExpr src, SymTable& vTable, TypeTable& tTable );
       void checkFunc ( const Lexeme& name, IdentifierType type, const std::string& args = "" );
 
       Tag checkType ( Tag operation, Tag left_operand, Tag right_operand );

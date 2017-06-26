@@ -265,7 +265,7 @@ compiler::pStmt compiler::Parser::parseBlock ( void ) {
   return block;
 };
 
-compiler::pSymType compiler::Parser::parseType ( SymTable& vTable, TypeTable& tTable/*, InitExpected init*/ ) {
+compiler::pSymType compiler::Parser::parseType ( SymTable& vTable, TypeTable& tTable ) {
   pSymType type = nullptr;
   Lexeme lexeme = scanner.lex();
   switch (lexeme.tag) {
@@ -417,7 +417,7 @@ compiler::pSymType compiler::Parser::parseRecord ( SymTable& vTable, TypeTable& 
           pExpr local_root = parseExpr(Priority::LOWEST);
           pExpr tmp = evalConstExpr(local_root, vTable, tTable);
           //TODO: check type of tmp end evaluate to array
-          arr->values[i-arr->low] = checkType(arr->values[i-arr->low], arr->elemType, tmp);
+          arr->values[i-arr->low] = checkType(arr->values[i-arr->low], arr->elemType, tmp, vTable, tTable);
           lexeme = scanner.lex();
           if (i < arr->high && lexeme.tag != Tag::COMMA)
             err("','");
@@ -429,7 +429,7 @@ compiler::pSymType compiler::Parser::parseRecord ( SymTable& vTable, TypeTable& 
         lexeme = scanner.lex();
         pExpr local_root = parseExpr(Priority::LOWEST);
         pExpr tmp = evalConstExpr(local_root, vTable, tTable);
-        var.front() = checkType(var.front(), var.front()->type, tmp);
+        var.front() = checkType(var.front(), var.front()->type, tmp, vTable, tTable);
       }
     }
 
@@ -518,7 +518,7 @@ void compiler::Parser::parseConst ( SymTable& vTable, TypeTable& tTable ) {
         //NOW PARSE CONST EXPR
         local_root = parseExpr(Priority::LOWEST);
         tmp = evalConstExpr(local_root, vTable, tTable);
-        var = checkType(var, var->type, tmp);
+        var = checkType(var, var->type, tmp, vTable, tTable);
       break;
       default :
         err("'='");
@@ -589,7 +589,7 @@ void compiler::Parser::parseVar ( SymTable& vTable, TypeTable& tTable ) {
           pExpr local_root = parseExpr(Priority::LOWEST);
           pExpr tmp = evalConstExpr(local_root, vTable, tTable);
           //TODO: check type of tmp end evaluate to array
-          arr->values[i-arr->low] = checkType(arr->values[i-arr->low], arr->elemType, tmp);
+          arr->values[i-arr->low] = checkType(arr->values[i-arr->low], arr->elemType, tmp, vTable, tTable);
           lexeme = scanner.lex();
           if (i < arr->high && lexeme.tag != Tag::COMMA)
             err("','");
@@ -601,7 +601,7 @@ void compiler::Parser::parseVar ( SymTable& vTable, TypeTable& tTable ) {
         lexeme = scanner.lex();
         pExpr local_root = parseExpr(Priority::LOWEST);
         pExpr tmp = evalConstExpr(local_root, vTable, tTable);
-        var.front() = checkType(var.front(), var.front()->type, tmp);
+        var.front() = checkType(var.front(), type, tmp, vTable, tTable);
       }
     }
 
@@ -1050,7 +1050,7 @@ std::tuple<compiler::pSymTable, std::string> compiler::Parser::parseParams( void
               scanner.next();
               pExpr local_root = parseExpr(Priority::LOWEST);
               pExpr tmp = evalConstExpr(local_root, varTable, typeTable);
-              vars.front() = checkType(vars.front(), type, tmp);
+              vars.front() = checkType(vars.front(), type, tmp, varTable, typeTable);
             }
         break;
         case (GLOB::VAL_PARAM):
@@ -1066,7 +1066,7 @@ std::tuple<compiler::pSymTable, std::string> compiler::Parser::parseParams( void
               scanner.next();
               pExpr local_root = parseExpr(Priority::LOWEST);
               pExpr tmp = evalConstExpr(local_root, varTable, typeTable);
-              vars.front() = checkType(vars.front(), type, tmp);
+              vars.front() = checkType(vars.front(), type, tmp, varTable, typeTable);
             }
         break;
         case (GLOB::OUT_PARAM):
@@ -1105,7 +1105,7 @@ std::tuple<compiler::pSymTable, std::string> compiler::Parser::parseParams( void
   return std::make_tuple(resTable, sstream.str());
 };
 
-compiler::pSymVar compiler::Parser::checkType ( pSymVar res, pSymType type, pExpr src ) {
+compiler::pSymVar compiler::Parser::checkType ( pSymVar res, pSymType type, pExpr src, SymTable& vTable, TypeTable& tTable ) {
   if (res == nullptr)
     res = pSymVar(new SymVar);
   if (type == nullptr) {
@@ -1124,8 +1124,9 @@ compiler::pSymVar compiler::Parser::checkType ( pSymVar res, pSymType type, pExp
       case (ExprEnum::Identifier):
         if (src->tag == Tag::B_FALSE || src->tag == Tag::B_TRUE)
           res->type = pSymType(new TypeScalar(SCALAR_TYPE::BOOLEAN));
-        else if (src->tag == Tag::POINTER)
+        else if (src->tag == Tag::NIL) {
           res->type = pSymType(new TypePointer("NIL"));
+        }
         else err(*src);
       break;
       default: err(*src);
@@ -1151,17 +1152,17 @@ compiler::pSymVar compiler::Parser::checkType ( pSymVar res, pSymType type, pExp
       res->type = pSymType(new TypeScalar(SCALAR_TYPE::BOOLEAN));
     break;
     case (SCALAR_TYPE::CHAR):
-      if (src->tag != Tag::CHARACTER)
+      if (src->exprType != ExprEnum::Char)
         err(*src);
       res->type = pSymType(new TypeScalar(SCALAR_TYPE::CHAR));
     break;
     case (SCALAR_TYPE::INTEGER):
-      if (src->tag != Tag::INTEGER)
+      if (src->exprType != ExprEnum::Integer)
         err(*src);
       res->type = pSymType(new TypeScalar(SCALAR_TYPE::INTEGER));
     break;
     case (SCALAR_TYPE::REAL):
-      if (src->tag != Tag::INTEGER && src->tag != Tag::REAL)
+      if (src->exprType != ExprEnum::Integer && src->exprType != ExprEnum::Real)
         err(*src);
       res->type = pSymType(new TypeScalar(SCALAR_TYPE::REAL));
     break;

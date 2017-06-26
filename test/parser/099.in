@@ -1,0 +1,6 @@
+const
+	i = true;
+var
+	id : boolean = not i;
+begin
+end;

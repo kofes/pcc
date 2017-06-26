@@ -1,0 +1,6 @@
+const
+	r = 10;
+var
+	l : real = 2*pi*r;
+begin
+end

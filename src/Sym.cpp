@@ -105,9 +105,12 @@ void compiler::TypeRecord::checkIdent ( const Lexeme& lexeme ) {
 std::string compiler::TypePointer::print ( unsigned int deep ) {
   std::ostringstream sstream;
 
-  sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "^(" << elemType->print(0) << ')';
-
+  sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR);
+  if (elemType != nullptr)
+    sstream << "^(" << elemType->print(0) << ')';
+  else
+    sstream << "^()";
+  
   return sstream.str();
 };
 //TAG: TYPE/ALIAS, NAME: nameNewType, TYPE: what is type was copied?
