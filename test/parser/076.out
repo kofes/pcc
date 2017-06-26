@@ -1,0 +1,21 @@
+<function table>
+   <function><name>FOOBAR</name>
+      <return type>BOOLEAN</return type>
+      <params>
+         <param>ARR:v:ARRAY OF CHAR</param>
+      </params>
+      <body>
+      </body>
+   </function>
+</function table>
+<type table>
+   <type>BOOLEAN</type>
+   <type>CHAR</type>
+   <type>INTEGER</type>
+   <type>REAL</type>
+</type table>
+<var table>
+   <var>PI:C:REAL:3.1415926535897932385</var>
+</var table>
+<block statement>
+</block statement>

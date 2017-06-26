@@ -1,7 +1,1 @@
-   3
-[
-      C
-   .
-         2
-      [
-         A
+Unexpected token '=' in pos (2, 26); expected '';'';

@@ -1,0 +1,6 @@
+function foo:integer;
+begin
+end;
+procedure foo;
+begin
+end;

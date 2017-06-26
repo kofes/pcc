@@ -1,0 +1,6 @@
+const
+	i = 10 + 5;
+var
+	id : real = i + 4.2;
+begin
+end

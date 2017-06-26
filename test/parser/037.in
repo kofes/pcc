@@ -1,1 +1,2 @@
-a.b
+var
+	arr: array[0..42] of

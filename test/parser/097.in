@@ -1,0 +1,6 @@
+const
+	i = 8;
+var
+	id : real = i div 2;
+begin
+end;

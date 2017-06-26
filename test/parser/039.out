@@ -1,1 +1,1 @@
-Unexpected token '[' in pos (1, 3); expected 'IDENTIFIER';
+Unexpected end of file in pos (3, 1); expected '`begin statement`';

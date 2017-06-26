@@ -1,1 +1,4 @@
-c[1][i]
+const
+	id = 10;
+begin
+end

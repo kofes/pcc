@@ -1,0 +1,10 @@
+function foo(var v: integer; const c = true): integer;
+begin
+end;
+
+procedure foo(elem : integer; out res : boolean);
+begin
+end;
+
+begin
+end

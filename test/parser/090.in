@@ -1,0 +1,6 @@
+const
+	i = 5;
+var
+	id : integer = i;
+begin
+end

@@ -1,1 +1,2 @@
-not -a
+var
+	arr : array[0..5]

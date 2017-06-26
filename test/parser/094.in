@@ -1,0 +1,6 @@
+const
+	i = 1;
+var
+	id : integer = i shl 2;
+begin
+end;

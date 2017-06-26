@@ -1,1 +1,3 @@
-[
+var
+ident1, ident2 : integer;
+ident3, ident1 : char;

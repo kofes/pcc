@@ -1,0 +1,6 @@
+const
+	i = 8;
+var
+	id : integer = i shr 2;
+begin
+end;

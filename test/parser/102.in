@@ -1,0 +1,6 @@
+const
+	i = 1;
+var
+	id : boolean = i <> 1;
+begin
+end;

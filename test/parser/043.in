@@ -1,1 +1,4 @@
-a[2].c
+var
+	arr : array[13..29,7..11] of integer;
+begin
+end

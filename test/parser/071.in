@@ -1,0 +1,4 @@
+type
+	tmp_t = boolean;
+begin
+end

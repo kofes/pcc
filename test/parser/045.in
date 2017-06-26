@@ -1,1 +1,4 @@
-a[2].c[3,]
+var
+	arr : array[0..1] of integer = (2, 5);
+begin
+end

@@ -1,0 +1,5 @@
+type
+	myBoolean = boolean;
+	ptr_bool = ^myBoolean;
+begin
+end

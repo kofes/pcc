@@ -1,0 +1,5 @@
+function bar(id:^boolean = nil):integer;
+begin
+end;
+begin
+end

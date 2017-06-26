@@ -1,1 +1,2 @@
-div
+var
+ident1, ident2:type

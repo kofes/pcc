@@ -1,0 +1,15 @@
+<function table>
+</function table>
+<type table>
+   <type>BOOLEAN</type>
+   <type>CHAR</type>
+   <type>INTEGER</type>
+   <type>MYARRAY=ARRAY OF INTEGER</type>
+   <type>PTR_ARR=^(MYARRAY=ARRAY OF INTEGER)</type>
+   <type>REAL</type>
+</type table>
+<var table>
+   <var>PI:C:REAL:3.1415926535897932385</var>
+</var table>
+<block statement>
+</block statement>

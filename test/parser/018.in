@@ -1,1 +1,3 @@
-a[
+program test;
+var
+test : integer;

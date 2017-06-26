@@ -1,16 +1,19 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include "Scanner.hpp"
-#include "Parser.hpp"
+#include "inc/Scanner.hpp"
+#include "inc/Parser.hpp"
 
 const std::string help =
   "Usage\n\n"
   "   <exec_file> [option] <file>\n\n"
   "Options\n\n"
-  "   -s, --scanner   - Lexer -> print all lexems from <file> to &1\n"
-  "   -p, --parser    - Parser -> print syntax tree of expressions from <file> to &1\n"
-  "   -h, --help      - Print 'help'\n\n"
+  "   -s, --scanner          - Lexer -> print all lexems from <file> to &1\n"
+  "   -p, --parser           - Parser -> print syntax trees of statements from <file> to &1\n"
+  "   -e, --parse-expression - Parser -> print syntax tree of expressions from <file> to &1\n"
+  "   -v, --parse-variables  - Parser -> print table of variables from <file> to &1\n"
+  "   -f, --parse-functions  - Parser -> print table of functions from <file> to &1\n"
+  "   -h, --help             - Print 'help'\n\n"
   "<file> <- 'test.pas', if not setted.\n";
 
 int main(int argc, char const *argv[]) {
@@ -28,7 +31,7 @@ int main(int argc, char const *argv[]) {
     else
       scanner.open("test.pas");
     do {
-      scanner.nextLex();
+      scanner.next();
       lex = scanner.lex();
       std::cout << lex.row << ':'
            << lex.column << '\t'
@@ -55,6 +58,72 @@ int main(int argc, char const *argv[]) {
     }
     return 0;
   }
+
+  //PARSER OF EXPRESSIONS
+  if (!std::strcmp(argv[1], "--parse-expression") || !std::strcmp(argv[1], "-e")) {
+    compiler::Parser parser;
+    if (argc > 2)
+      parser.set(argv[2]);
+    else
+      parser.set("test.pas");
+    try {
+      parser.parseExpr();
+      std::cout << parser.printExprs();
+    } catch (std::exception& ex) {
+      std::cout << ex.what() << std::endl;
+    }
+    return 0;
+  }
+
+  //PARSER OF VARIABLES
+  if (!std::strcmp(argv[1], "--parse-variables") || !std::strcmp(argv[1], "-v")) {
+    compiler::Parser parser;
+    if (argc > 2)
+      parser.set(argv[2]);
+    else
+      parser.set("test.pas");
+    try {
+      parser.parseTable();
+      std::cout << parser.printVarTable();
+    } catch (std::exception& ex) {
+      std::cout << ex.what() << std::endl;
+    }
+    return 0;
+  }
+
+  //PARSER OF FUNCTIONS
+  if (!std::strcmp(argv[1], "--parse-functions") || !std::strcmp(argv[1], "-f")) {
+    compiler::Parser parser;
+    if (argc > 2)
+      parser.set(argv[2]);
+    else
+      parser.set("test.pas");
+    try {
+      parser.parseTable();
+      std::cout << parser.printFuncTable();
+    } catch (std::exception& ex) {
+      std::cout << ex.what() << std::endl;
+    }
+    return 0;
+  }
+
+  //PARSER OF FUNCTIONS
+  if (!std::strcmp(argv[1], "--generate-asm") || !std::strcmp(argv[1], "-s")) {
+    compiler::Parser parser;
+    if (argc > 2)
+      parser.set(argv[2]);
+    else
+      parser.set("test.pas");
+    try {
+      parser.parse();
+      parser.generate();
+      std::cout << parser.printAsm();
+    } catch (std::exception& ex) {
+      std::cout << ex.what() << std::endl;
+    }
+    return 0;
+  }
+
 
   std::cout << "unknown token: " << argv[1] << std::endl;
   std::cout << help << std::endl;
