@@ -40,6 +40,8 @@ public:
   std::string printVarTable ( void );
   std::string printFuncTable ( void );
   std::string printTypeTable ( void );
+  void generate ( void );
+  std::string printAsm ( void );
 private:
   //parseExpr
     //Methods
