@@ -35,6 +35,12 @@ struct ExprInteger : public ExprTerm {
 struct ExprReal : public ExprTerm {
   ExprReal ( const Lexeme& lex ) : ExprTerm(lex) { exprType = ExprEnum::Real; };
 };
+struct ExprChar : public ExprTerm {
+  ExprChar ( const Lexeme& lex ) : ExprTerm(lex) { exprType = ExprEnum::Char; };
+};
+struct ExprString : public ExprTerm {
+  ExprString ( const Lexeme& lex ) : ExprTerm(lex) { exprType = ExprEnum::String; };
+};
 struct ExprIdentifier : public ExprTerm {
   ExprIdentifier ( const Lexeme& lex ) : ExprTerm(lex) { exprType = ExprEnum::Identifier; };
 };

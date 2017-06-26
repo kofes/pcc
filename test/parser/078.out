@@ -1,0 +1,22 @@
+<func table>:
+<procedure>:FOO
+   <body>:
+   <end>
+
+<function>:FOO
+   <return's type>:
+      INTEGER
+   <params>:
+      V:v:INTEGER:
+   <body>:
+   <end>
+
+<type table>:
+BOOLEAN
+CHAR
+INTEGER
+REAL
+<var table>:
+PI:C:REAL:3.1415926535897932385
+<block statement>:
+------------------

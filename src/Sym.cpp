@@ -5,10 +5,12 @@ std::string compiler::SymVar::print ( unsigned int deep ) {
 
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
           << this->name << ':'
-          << static_cast<char>(this->glob) << ':'
-          << this->type->print(0) << ':'
-          << this->value;
-          // << std::endl;
+          << static_cast<char>(this->glob) << ':';
+  if (type == nullptr)
+      sstream << "<untyped>:";
+  else
+      sstream << this->type->print(0) << ':';
+  sstream << this->value;
 
   return sstream.str();
 };
@@ -16,19 +18,33 @@ std::string compiler::SymVar::print ( unsigned int deep ) {
 std::string compiler::SymFunc::print ( unsigned int deep ) {
   std::ostringstream sstream;
 
-  sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "Function:" << this->name << "\n"
-          << "Params:\n";
-
-  for (const std::pair< std::string, pSymVar >& elem : *(params.get()))
-    sstream << elem.second->print(deep);
-
-  sstream << "Variables:\n";
-
-  for (const std::pair< std::string, pSymVar >& elem : varTable)
-    sstream << elem.second->print(deep);
-
-  //TODO: print body
+  if (retType != nullptr) {
+      sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+              << "<function>:" << this->name << "\n";
+      sstream << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+              << "<return's type>:\n";
+      sstream << retType->print(deep+2) << '\n';
+  } else {
+      sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+              << "<procedure>:" << this->name << "\n";
+  }
+  if (params != nullptr) {
+      sstream << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+              << "<params>:\n";
+      for (const std::pair< std::string, pSymVar >& elem : *(params.get()))
+        sstream << elem.second->print(deep+2) << '\n';
+  }
+  if (varTable.size()) {
+      sstream << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+              << "<variables>:\n";
+      for (const std::pair< std::string, pSymVar >& elem : varTable)
+        sstream << elem.second->print(deep+2) << '\n';
+  }
+  sstream << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "<body>:\n";
+  body->print(deep+2);
+  sstream << std::string((deep+1)*compiler::DEEP_STEP, compiler::DEEP_CHAR)
+          << "<end>\n";
   return sstream.str();
 };
 
@@ -36,8 +52,17 @@ std::string compiler::TypeArray::print ( unsigned int deep ) {
   std::ostringstream sstream;
 
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "ARRAY[" << low << ":" << high << "] OF "
+          << "ARRAY";
+  if (low < high)
+    sstream << "[" << low << ":" << high << "]";
+  sstream << " OF "
           << elemType->print(0);
+  if (values.size()) {
+    sstream << '(' << values.front()->value;
+    for (unsigned long long i = low+1; i <= high; ++i)
+      sstream << ", " << values[i-low]->value;
+    sstream << ')';
+  }
 
   return sstream.str();
 };
@@ -58,7 +83,7 @@ std::string compiler::TypePointer::print ( unsigned int deep ) {
   std::ostringstream sstream;
 
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "POINTER:" << elemType->print(0);
+          << "^(" << elemType->print(0) << ')';
 
   return sstream.str();
 };
@@ -66,9 +91,7 @@ std::string compiler::TypePointer::print ( unsigned int deep ) {
 std::string compiler::TypeAlias::print ( unsigned int deep ) {
   std::ostringstream sstream;
 
-  sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << "ALIAS OF:\n"
-          << this->name << "="
+  sstream << this->name << "="
           << type->print(0);
 
   return sstream.str();

@@ -20,7 +20,6 @@ enum class Token : unsigned short {
 
 enum class Tag : unsigned long int {
   UNDEFINED,
-
   ABSOLUTE,
   ABSTRACT,
   ARRAY,
@@ -71,7 +70,6 @@ enum class Tag : unsigned long int {
   ON,
   OPERATOR,
   OVERRIDE,
-  OUT,
   PACKED,
   PRIVATE,
   PROCEDURE,
@@ -172,6 +170,9 @@ enum class Tag : unsigned long int {
   COMMENT_OLD,     // -- '(*some words*)'
   COMMENT_TURBO,   // -- '{some words}'
   COMMENT_DELPHI,  // -- '//some words'
+
+  OUT,
+  IDENTIFIER,
 };
 
 static std::map<Tag, std::string> const tagBook = {

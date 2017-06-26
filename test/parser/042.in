@@ -1,0 +1,4 @@
+var
+	arr : array[0..404,23..20] of integer;
+begin
+end

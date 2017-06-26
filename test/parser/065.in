@@ -1,0 +1,6 @@
+procedure bar(id: ^boolean = nil);
+begin
+end;
+
+begin
+end

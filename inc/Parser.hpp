@@ -32,11 +32,11 @@ enum class Priority : unsigned short {
   LOWEST = 3
 };
 
-enum class InitExpected {
-  NO,
-  YES,
-  MAYBE
-};
+// enum class InitExpected {
+//   NO,
+//   YES,
+//   MAYBE
+// };
 
 enum class IdentifierType {
   VARIABLE, FUNCTION, TYPE
@@ -49,6 +49,7 @@ public:
   void set ( const std::string& filename );
   void parse ( void );
   void parseExpr ( void );
+  void parseTable ( void );
   std::string print ( void );
   std::string printExprs ( void );
   std::string printVarTable ( void );
@@ -81,10 +82,10 @@ private:
       void errHighLow ( const Lexeme& lexeme );
       void checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable );
       //If res.type <=> src.type || nullptr => res.[value|type] = src.[value|type] else errType();
-      void checkType ( pSymVar& res, pSymVar& src );
-      void checkFunc ( const std::string& name, IdentifierType type, const std::string& args = "" );
+      pSymVar checkType ( pSymVar res, pSymType type, pExpr src );
+      void checkFunc ( const Lexeme& name, IdentifierType type, const std::string& args = "" );
 
-      void checkConst( pExpr& node );
+      Tag checkType ( Tag operation, Tag left_operand, Tag right_operand );
     //
 
     pStmt parseStmt ( void );
@@ -97,11 +98,11 @@ private:
     pStmt parseEmpty ( void );
     pStmt parseBlock ( void );
 
-    pSymType parseType ( SymTable& vTable, TypeTable& tTable, InitExpected init );
+    pSymType parseType ( SymTable& vTable, TypeTable& tTable/*, InitExpected init*/ );
     pSymType parseArray ( SymTable& vTable, TypeTable& tTable );
     pSymType parseRecord ( void );
     pSymType parseEnum ( void );
-    pSymType parsePointer ( void );
+    pSymType parsePointer ( SymTable& vTable, TypeTable& tTable );
 
     void parseProgramName ( const compiler::Lexeme& program );
 
@@ -109,7 +110,7 @@ private:
     void parseVar ( SymTable& vTable, TypeTable& tTable );
     //Initialization for Const-decl and Var-decl variables
     void parseConstExpr ( SymTable& vTable, TypeTable& tTable );
-    pSymVar evalConstExpr ( pExpr& root, SymTable& vTable, TypeTable& tTable );
+    pExpr evalConstExpr ( pExpr& root, SymTable& vTable, TypeTable& tTable );
 
     void parseFunction ( bool expectRetVal = true );
     // void parseProcedure ( void );

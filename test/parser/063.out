@@ -1,0 +1,18 @@
+<func table>:
+<function>:BAR
+   <return's type>:
+      INTEGER
+   <params>:
+      ID:p:^(BOOLEAN):NIL
+   <body>:
+   <end>
+
+<type table>:
+BOOLEAN
+CHAR
+INTEGER
+REAL
+<var table>:
+PI:C:REAL:3.1415926535897932385
+<block statement>:
+------------------

@@ -83,7 +83,7 @@ int main(int argc, char const *argv[]) {
     else
       parser.set("test.pas");
     try {
-      parser.parse();
+      parser.parseTable();
       std::cout << parser.printVarTable();
     } catch (std::exception& ex) {
       std::cout << ex.what() << std::endl;
@@ -99,7 +99,7 @@ int main(int argc, char const *argv[]) {
     else
       parser.set("test.pas");
     try {
-      parser.parse();
+      parser.parseTable();
       std::cout << parser.printFuncTable();
     } catch (std::exception& ex) {
       std::cout << ex.what() << std::endl;

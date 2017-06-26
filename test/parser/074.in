@@ -1,0 +1,5 @@
+type
+	myArray = array of integer;
+	ptr_arr = ^myArray;
+begin
+end

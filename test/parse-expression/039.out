@@ -1,1 +1,1 @@
-Unexpected token '[' in pos (1, 3); expected 'IDENTIFIER';
+Unexpected token '[' in pos (1, 3); expected '`identifier`';

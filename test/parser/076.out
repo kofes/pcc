@@ -1,0 +1,18 @@
+<func table>:
+<function>:FOOBAR
+   <return's type>:
+      BOOLEAN
+   <params>:
+      ARR:v:ARRAY OF CHAR:
+   <body>:
+   <end>
+
+<type table>:
+BOOLEAN
+CHAR
+INTEGER
+REAL
+<var table>:
+PI:C:REAL:3.1415926535897932385
+<block statement>:
+------------------

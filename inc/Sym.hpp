@@ -18,7 +18,7 @@ enum class GLOB : char {
 };
 
 enum class SCALAR_TYPE : unsigned long int {
-  POINTER = static_cast<unsigned long int>(Tag::POINTER),
+  // POINTER = static_cast<unsigned long int>(Tag::POINTER),
   BOOLEAN = static_cast<unsigned long int>(Tag::BOOLEAN),
   CHAR = static_cast<unsigned long int>(Tag::CHAR),
   INTEGER = static_cast<unsigned long int>(Tag::INTEGER),
@@ -75,9 +75,10 @@ struct TypeScalar : public SymType {
 };
 //ARRAY: <low>...<high> of <elemType>
 struct TypeArray : public SymType {
-  TypeArray ( const std::string& name ) : SymType(name) { symType = SymEnum::Array; };
+  TypeArray ( const std::string& name = "" ) : SymType(name) { symType = SymEnum::Array; };
   std::string print ( unsigned int deep ) override;
-  pSym elemType;
+  pSymType elemType;
+  std::vector<pSymVar> values;
   size_t low, high;
 };
 //RECORD: <v11>,...<v1N> : <type1>;...; <vM1>,...,<vMK> : <typeM>; end;
@@ -90,12 +91,12 @@ struct TypeRecord : public SymType {
 struct TypePointer : public SymType {
   TypePointer ( const std::string& name ) : SymType(name) { symType = SymEnum::Pointer; };
   std::string print ( unsigned int deep ) override;
-  pSym elemType;
+  pSymType elemType;
 };
 //TAG: TYPE/ALIAS, NAME: nameNewType, TYPE: what is type was copied?
 struct TypeAlias : public SymType {
   TypeAlias ( const std::string& name ) : SymType(name) { symType = SymEnum::Alias; };
   std::string print ( unsigned int deep ) override;
-  pSym type;
+  pSymType type;
 };
 };

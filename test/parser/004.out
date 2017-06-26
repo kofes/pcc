@@ -1,1 +1,1 @@
-Unexpected end of file in pos (2, 1); expected 'BEGIN STATEMENT';
+Unexpected end of file in pos (2, 1); expected '`begin statement`';

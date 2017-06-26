@@ -1,0 +1,4 @@
+var
+	arr : array[0..1] of integer = (2, 5);
+begin
+end

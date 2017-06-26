@@ -1,0 +1,6 @@
+function foobar(var arr: array of char): boolean;
+begin
+end;
+
+begin
+end

@@ -1,0 +1,5 @@
+function foobar(const cnst = 13; var v_link; out o_link : integer):integer;
+begin
+end;
+begin
+end

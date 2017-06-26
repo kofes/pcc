@@ -1,0 +1,12 @@
+<func table>:
+<type table>:
+BOOLEAN
+CHAR
+INTEGER
+MYARRAY=ARRAY OF INTEGER
+PTR_ARR=^(MYARRAY=ARRAY OF INTEGER)
+REAL
+<var table>:
+PI:C:REAL:3.1415926535897932385
+<block statement>:
+------------------

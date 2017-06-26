@@ -1,0 +1,20 @@
+<func table>:
+<function>:FOOBAR
+   <return's type>:
+      INTEGER
+   <params>:
+      CNST:c:<untyped>:13
+      O_LINK:o:INTEGER:
+      V_LINK:v:<untyped>:
+   <body>:
+   <end>
+
+<type table>:
+BOOLEAN
+CHAR
+INTEGER
+REAL
+<var table>:
+PI:C:REAL:3.1415926535897932385
+<block statement>:
+------------------

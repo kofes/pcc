@@ -1,0 +1,3 @@
+function foo(id:^integer):boolean;
+begin
+end

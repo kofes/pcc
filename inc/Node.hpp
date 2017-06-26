@@ -12,7 +12,7 @@ enum class NodeEnum {
 };
 
 enum class ExprEnum {
-  BinOp, UnOp, Integer, Real, Identifier, Record, Array, Function
+  BinOp, UnOp, Integer, Real, Char, String, Identifier, Record, Array, Function
 };
 
 enum class SymEnum {

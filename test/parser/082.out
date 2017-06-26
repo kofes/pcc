@@ -1,0 +1,18 @@
+<func table>:
+<type table>:
+BOOLEAN
+CHAR
+INTEGER
+REAL
+<var table>:
+PI:C:REAL:3.1415926535897932385
+<block statement>:
+   <assignment statement>:
+      <variable>:
+         V
+
+      <value>:
+         10
+
+   ------------------
+------------------

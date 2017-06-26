@@ -1,0 +1,9 @@
+function foo(var v:integer):integer;
+begin
+end;
+procedure foo(elem : integer);
+begin
+end;
+
+begin
+end

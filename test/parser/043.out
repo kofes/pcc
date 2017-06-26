@@ -1,0 +1,11 @@
+<func table>:
+<type table>:
+BOOLEAN
+CHAR
+INTEGER
+REAL
+<var table>:
+ARR:V:ARRAY[13:29] OF ARRAY[7:11] OF INTEGER:
+PI:C:REAL:3.1415926535897932385
+<block statement>:
+------------------
