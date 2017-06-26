@@ -706,10 +706,8 @@ void compiler::Parser::parseAlias ( SymTable& vTable, TypeTable& tTable ) {
     lexeme = scanner.lex();
 
     switch (lexeme.tag) {
-      // case (Tag::ARRAY): alias->type = parseArray(vTable, tTable); break;
       case (Tag::RECORD): alias->type = parseRecord(vTable, tTable); break;
-      case (Tag::LEFT_PARENTHESIS): alias->type = parseEnum(); break;
-      // case (Tag::POINTER): alias->type = parsePointer(vTable, tTable); break;
+      // case (Tag::LEFT_PARENTHESIS): alias->type = parseEnum(); break;
       default:
         alias->type = parseType(vTable, tTable);
         lexeme = scanner.lex();
@@ -718,13 +716,9 @@ void compiler::Parser::parseAlias ( SymTable& vTable, TypeTable& tTable ) {
       break;
     }
     lexeme = scanner.lex();
-    //
-    // scanner.next();
-    // lexeme = scanner.lex();
-    //
+
     if (lexeme.tag != Tag::SEMICOLON)
       err("';'");
-
 
     tTable[alias->name] = alias;
 
