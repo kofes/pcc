@@ -11,8 +11,8 @@
 #include "Expr.hpp"
 #include "Stmt.hpp"
 #include "Sym.hpp"
-
 #include "CompileTimeFunctions.hpp"
+#include "Asm.hpp"
 
 namespace compiler {
 //ParseExpr-enum
@@ -26,6 +26,8 @@ enum class Priority : unsigned short {
 enum class IdentifierType {
   VARIABLE, FUNCTION, TYPE
 };
+
+pSymType evalAlias ( pSymType type );
 
 class Parser {
 public:
@@ -67,29 +69,34 @@ private:
       void errDuplicated ( void );
       void errConstOp ( const Lexeme& lexeme );
       void errHighLow ( const Lexeme& lexeme );
+      void errDecl ( const Lexeme& lexeme );
+      void errConst ( const Lexeme& lexeme );
+      void errAssignment ( const Lexeme& lexeme );
       void checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable );
       pSymVar checkType ( pSymVar res, pSymType type, pExpr src, SymTable& vTable, TypeTable& tTable );
       void checkFunc ( const Lexeme& name, IdentifierType type, const std::string& args = "" );
 
-      Tag checkType ( Tag operation, Tag left_operand, Tag right_operand );
+      pSymType evalVarType ( pExpr val, SymTable& vTable );
+      pSymType evalExprType( pExpr val, SymTable& vTable );
+
     //
 
-    pStmt parseStmt ( void );
+    pStmt parseStmt ( SymTable& vTable );
 
-    pStmt parseSimpleStmt ( void );
-    pStmt parseIf ( void );
-    pStmt parseWhile ( void );
-    pStmt parseRepeat ( void );
-    pStmt parseFor ( void );
+    pStmt parseSimpleStmt ( SymTable& vTable );
+    pStmt parseIf ( SymTable& vTable );
+    pStmt parseWhile ( SymTable& vTable );
+    pStmt parseRepeat ( SymTable& vTable );
+    pStmt parseFor ( SymTable& vTable );
     pStmt parseEmpty ( void );
-    pStmt parseBlock ( void );
+    pStmt parseBlock ( SymTable& vTable );
 
     pStmt parseBreak ( void );
     pStmt parseContinue ( void );
 
     pSymType parseType ( SymTable& vTable, TypeTable& tTable );
     pSymType parseArray ( SymTable& vTable, TypeTable& tTable );
-    pSymType parseRecord ( SymTable& vTable, TypeTable& tTable );
+    pSymType parseRecord ( const std::string& name, SymTable& vTable, TypeTable& tTable );
     pSymType parseEnum ( void );
     pSymType parsePointer ( SymTable& vTable, TypeTable& tTable );
 
@@ -108,8 +115,8 @@ private:
     void parseAlias ( SymTable& vTable, TypeTable& tTable );
 
     void setTypeTable ( void );
-    void setVarTable( void );
-
+    void setVarTable ( void );
+    bool unification ( const std::string& first, const std::string& second);
     //Variables
     SymTable varTable;
     TypeTable typeTable;
@@ -119,6 +126,9 @@ private:
     std::map< std::string, CompileTimeFunction> ctFuncTable;
 
     bool programTokenChecked;
+  //
+  //Asm
+    // Generator asmGenerator;
   //
   //Global
     //Methods

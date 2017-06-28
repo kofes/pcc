@@ -107,7 +107,7 @@ int main(int argc, char const *argv[]) {
     return 0;
   }
 
-  //PARSER OF FUNCTIONS
+  //GENERATE ASM
   if (!std::strcmp(argv[1], "--generate-asm") || !std::strcmp(argv[1], "-s")) {
     compiler::Parser parser;
     if (argc > 2)
@@ -123,7 +123,6 @@ int main(int argc, char const *argv[]) {
     }
     return 0;
   }
-
 
   std::cout << "unknown token: " << argv[1] << std::endl;
   std::cout << help << std::endl;

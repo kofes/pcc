@@ -1,0 +1,6 @@
+var
+	i : real;
+begin
+	for i := 14 to 19 do
+		writeln(11);
+end;

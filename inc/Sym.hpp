@@ -18,7 +18,6 @@ enum class GLOB : char {
 };
 
 enum class SCALAR_TYPE : unsigned long int {
-  // POINTER = static_cast<unsigned long int>(Tag::POINTER),
   BOOLEAN = static_cast<unsigned long int>(Tag::BOOLEAN),
   CHAR = static_cast<unsigned long int>(Tag::CHAR),
   INTEGER = static_cast<unsigned long int>(Tag::INTEGER),
@@ -41,9 +40,19 @@ typedef std::shared_ptr<TypeTable> pTypeTable;
 
 struct Sym : public Node {
   Sym ( const std::string& src ) : name(src) { nodeType = NodeEnum::Sym; };
+  // virtual void generate(Generator& asmGenerator);
+  // virtual void generateDecl(Generator& asmGenerator);
+  // virtual void generateLValue(Generator& asmGenerator);
+  // virtual void generateValue(Generator& asmGenerator);
   SymEnum symType;
   std::string name;
+  int offset;
+  int size;
 };
+
+bool operator!= (pSymType type1, pSymType type2);
+
+bool operator== (pSymType type1, pSymType type2);
 
 struct SymType : public Sym {
   SymType ( const std::string& name = "" ) : Sym(name) {};
@@ -52,6 +61,9 @@ struct SymType : public Sym {
 struct SymVar : public Sym {
   SymVar ( const std::string& name = "" ) : Sym(name) { symType = SymEnum::Var; };
   std::string print ( unsigned int deep ) override;
+  // void generateDecl(Generator& asmGenerator) override;
+  // void generateLValue(Generator& asmGenerator) override;
+  // void generateValue(Generator& asmGenerator) override;
   pSymType type;
   GLOB glob;
   std::string value;
@@ -60,11 +72,14 @@ struct SymVar : public Sym {
 struct SymFunc : public Sym {
   SymFunc ( const std::string& name ) : Sym(name) { symType = SymEnum::Function; };
   std::string print ( unsigned int deep ) override;
-  pSym retType;
+  // void generate(Generator& asmGenerator) override;
+  pSymType retType;
   pSymTable params;
   SymTable varTable;
   TypeTable typeTable;
   pNode body;
+  int level;
+  size_t size_table;
 };
 //NIL, INTEGER, REAL, CHAR, BOOLEAN
 struct TypeScalar : public SymType {

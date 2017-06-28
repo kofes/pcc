@@ -1,0 +1,7 @@
+const
+	R = 10;
+	L = 2*pi*R;
+var
+	S : real = (L/2)*R;
+begin
+end

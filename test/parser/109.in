@@ -1,0 +1,10 @@
+procedure foo(v : array of char);
+begin
+end;
+
+procedure foo(v : array of boolean);
+begin
+end;
+
+begin
+end;

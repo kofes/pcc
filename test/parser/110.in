@@ -1,0 +1,13 @@
+type
+	bool = boolean;
+
+procedure foo(v : bool);
+begin
+end;
+
+procedure foo(v : boolean);
+begin
+end;
+
+begin
+end;

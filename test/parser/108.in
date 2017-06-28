@@ -1,0 +1,10 @@
+function foo(var i,j : real; k : real): boolean;
+begin
+end;
+
+function foo(i,j,k : real):integer;
+begin
+end;
+
+begin
+end

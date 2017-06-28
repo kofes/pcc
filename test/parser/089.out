@@ -16,7 +16,7 @@
    <type>REAL</type>
 </type table>
 <var table>
-   <var>ID:V:RC=
+   <var>ID:V:
    <record>
       <field>CH:V:CHAR</field>
       <field>X:V:REAL</field>

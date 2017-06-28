@@ -548,7 +548,7 @@ compiler::pExpr compiler::Parser::evalConstExpr ( pExpr& root, SymTable& vTable,
       case (ExprEnum::UnOp):
         return doUnOp(std::dynamic_pointer_cast<ExprUnOp>(root),
                       evalConstExpr(std::dynamic_pointer_cast<ExprUnOp>(root)->arg, vTable, tTable));
-      case (ExprEnum::BinOp):
+      case (ExprEnum::BinOp)://lazy evalation recheck!
         return doBinOp(std::dynamic_pointer_cast<ExprBinOp>(root),
                       evalConstExpr(std::dynamic_pointer_cast<ExprBinOp>(root)->left, vTable, tTable),
                       evalConstExpr(std::dynamic_pointer_cast<ExprBinOp>(root)->right, vTable, tTable));

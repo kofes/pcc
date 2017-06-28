@@ -16,7 +16,7 @@ const static std::string DEFINE_CHAR = "db";
 const static std::string FORMAT_INT = "formatInt";
 const static std::string FORMAT_FLOAT = "formatFloat";
 
-enum class RegisterEnum {
+enum class RegisterEnum : unsigned char {
   rax_,
   rdx_,
   rcx_,
@@ -29,7 +29,7 @@ enum class RegisterEnum {
   xmm1_
 };
 
-enum class OperationEnum {
+enum class OperationEnum : size_t {
   ret_,
 
   push_,
@@ -73,7 +73,7 @@ enum class OperationEnum {
   label_
 };
 
-enum class CmdEnum {
+enum class CmdEnum : unsigned char {
     line_,
     section_,
     global_,
@@ -90,7 +90,7 @@ enum class CmdEnum {
     label_,
 };
 
-enum class OperandEnum {
+enum class OperandEnum : unsigned char {
   operand_,
   reg_,
   mem_,
@@ -98,7 +98,7 @@ enum class OperandEnum {
   imm_int_,
 };
 
-static std::map<OperationEnum, std::string> const operations = {
+static std::map<OperationEnum, std::string> operations = {
   {OperationEnum::ret_, "ret"},
   {OperationEnum::push_, "push"},
   {OperationEnum::pop_, "pop"},
@@ -139,7 +139,7 @@ static std::map<OperationEnum, std::string> const operations = {
   {OperationEnum::label_, "label"},
 };
 
-static std::map<RegisterEnum, std::string> const registers = {
+static std::map<RegisterEnum, std::string> registers = {
   {RegisterEnum::rax_, "rax"},
   {RegisterEnum::rbx_, "rbx"},
   {RegisterEnum::rcx_, "rcx"},
@@ -177,7 +177,7 @@ struct Cmd {
 
 struct Cmd0 : public Cmd {
   Cmd0(OperationEnum oper) : Cmd(oper) {};
-  std::string name() override { return operations[oper_]};
+  std::string name() override { return operations[oper_]; };
   CmdEnum cmdType() override { return CmdEnum::cmd0_; };
 };
 
@@ -270,8 +270,8 @@ private:
 };
 
 struct Array : public Data {
-  Array (const std::string& name, int size);
-  std::string name() override;
+  Array (const std::string& name, int size) : Data(name), size_(size) {};
+  std::string name() override { return name_+": times "+std::to_string(size_) + " " + DEFINE_CHAR; };
 private:
   int size_;
 };
@@ -283,36 +283,16 @@ private:
     std::string val_;
 };
 
-pCmd to_cmd(OperationEnum oper) {
-  return pCmd(new Cmd0(oper));
-};
-pCmd to_cmd(OperationEnum oper, RegisterEnum reg) {
-  return pCmd(new Cmd1(oper, pOperand(new Reg(reg))));
-};
-pCmd to_cmd(OperationEnum oper, int val) {
-  return pCmd(new Cmd1(oper, pOperand(new ImmInt(val))));
-};
-pCmd to_cmd(OperationEnum oper, const std::string& val) {
-  return pCmd(new Cmd1(oper, pOperand(new ImmString(val))));
-};
-pCmd to_cmd(OperationEnum oper, pOperand operand) {
-  return pCmd(new Cmd1(oper, operand));
-};
-pCmd to_cmd(OperationEnum oper, RegisterEnum to, RegisterEnum src) {
-  return pCmd(new Cmd2(oper, pOperand(new Reg(to)), pOperand(new Reg(src))));
-};
-pCmd to_cmd(OperationEnum oper, RegisterEnum reg, const std::string& val) {
-  return pCmd(new Cmd2(oper, pOperand(new Reg(reg)), pOperand(new ImmString(val))));
-};
-pCmd to_cmd(OperationEnum oper, RegisterEnum reg, int val) {
-  return pCmd(new Cmd2(oper, pOperand(new Reg(reg)), pOperand(new ImmInt(val))));
-};
-pCmd to_cmd(OperationEnum oper, pOperand operand, RegisterEnum reg) {
-  return pCmd(new Cmd2(oper, operand, pOperand(new Reg(reg))));
-};
-pCmd to_cmd(OperationEnum oper, RegisterEnum reg, pOperand operand) {
-  return pCmd(new Cmd2(oper, pOperand(new Reg(reg)), operand));
-};
+pCmd to_cmd(OperationEnum oper);
+pCmd to_cmd(OperationEnum oper, RegisterEnum reg);
+pCmd to_cmd(OperationEnum oper, int val);
+pCmd to_cmd(OperationEnum oper, const std::string& val);
+pCmd to_cmd(OperationEnum oper, pOperand operand);
+pCmd to_cmd(OperationEnum oper, RegisterEnum to, RegisterEnum src);
+pCmd to_cmd(OperationEnum oper, RegisterEnum reg, const std::string& val);
+pCmd to_cmd(OperationEnum oper, RegisterEnum reg, int val);
+pCmd to_cmd(OperationEnum oper, pOperand operand, RegisterEnum reg);
+pCmd to_cmd(OperationEnum oper, RegisterEnum reg, pOperand operand);
 
 class Generator {
 public:
@@ -320,10 +300,10 @@ public:
   std::string print();
   void addCmd(pCmd cmd);
   void writeInt();
-  void addLine();
+  void writeNewLine();
   void writeFloat();
   void writeString(const std::string& src);
-  void addData(const std::string& name, const std::string& src);
+  void addData(const std::string& name, const std::string& val);
   void addData(const std::string& name, int val);
   void addData(const std::string& name, double val);
   void addArray(const std::string& name, int size);
@@ -333,17 +313,10 @@ public:
   std::string genLabel() { return "L" + std::to_string(countLabels++); };
   pOperand operandAdress(const std::string& name, int offset = 0);
   pOperand operandAdress(RegisterEnum reg, int offset = 0);
-  void addContinue(const std::string& name);
-  void addBreak(const std::string& name);
-  void rmContinue() { continues.pop_back(); };
-  void rmBreak() { breaks.pop_back(); };
-  std::string continueName();
-  std::string breakName();
 protected:
   void write(const std::string& format);
   std::vector<pCmd> cmds;
   std::vector<pData> data;
-  std::list<std::string> continues, breaks;
   size_t countNames, countPushes, countLabels;
 };
 

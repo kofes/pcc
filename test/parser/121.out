@@ -1,0 +1,39 @@
+<function table>
+</function table>
+<type table>
+   <type>BOOLEAN</type>
+   <type>CHAR</type>
+   <type>INTEGER</type>
+   <type>REAL</type>
+</type table>
+<var table>
+   <var>I:V:INTEGER</var>
+   <var>PI:C:REAL:3.1415926535897932385</var>
+</var table>
+<block statement>
+   <for statement>
+      <control variable>:
+         I
+      </control variable>:
+      <type>
+         TO
+      </type>
+      <initial value>:
+         14
+
+      </initial value>:
+      <final value>
+         19
+
+      </final value>
+      <body>
+         <procedure calling>
+            <value>
+                  11
+               (
+                  WRITELN
+
+            </value>
+         </procedure calling>      </body>
+   </for statement>
+</block statement>

@@ -34,7 +34,8 @@ void compiler::Generator::write(const std::string &format) {
     sub = true;
   }
   addCmd(to_cmd(OperationEnum::call_, "printf"));
-  if (sub) addCmd(to_cmd(OperationEnum::add_, RegisterEnum::rsp_, MAIN_WORD_SIZE));
+  if (sub)
+    addCmd(to_cmd(OperationEnum::add_, RegisterEnum::rsp_, MAIN_WORD_SIZE));
 };
 
 void compiler::Generator::writeInt() {
@@ -56,4 +57,64 @@ void compiler::Generator::writeString(const std::string& val) {
   addData(name, "\"" + val + "\"");
   addCmd(to_cmd(OperationEnum::xor_, RegisterEnum::rax_, RegisterEnum::rax_));
   write(name);
+};
+
+void compiler::Generator::writeNewLine() {
+  addCmd(to_cmd(OperationEnum::xor_, RegisterEnum::rax_, RegisterEnum::rax_));
+  write("format_new_line");
+};
+
+void compiler::Generator::addArray(const std::string& name, int size) {
+  data.push_back(pData(new Array(name, size)));
+};
+
+void compiler::Generator::addData(const std::string& name, const std::string& val) {
+  data.push_back(pData(new String(name, val)));
+};
+
+void compiler::Generator::addData(const std::string& name, int val) {
+  data.push_back(pData(new Int(name, val)));
+};
+
+void compiler::Generator::addData(const std::string& name, double val) {
+  data.push_back(pData(new Float(name, val)));
+};
+
+compiler::pOperand compiler::Generator::operandAdress(const std::string& name, int offset) {
+  return pOperand(new Mem(name, offset));
+};
+
+compiler::pOperand compiler::Generator::operandAdress(RegisterEnum reg, int offset) {
+  return pOperand(new Mem(reg, offset));
+};
+
+compiler::pCmd compiler::to_cmd(OperationEnum oper) {
+  return pCmd(new Cmd0(oper));
+};
+compiler::pCmd compiler::to_cmd(OperationEnum oper, RegisterEnum reg) {
+  return pCmd(new Cmd1(oper, pOperand(new Reg(reg))));
+};
+compiler::pCmd compiler::to_cmd(OperationEnum oper, int val) {
+  return pCmd(new Cmd1(oper, pOperand(new ImmInt(val))));
+};
+compiler::pCmd compiler::to_cmd(OperationEnum oper, const std::string& val) {
+  return pCmd(new Cmd1(oper, pOperand(new ImmString(val))));
+};
+compiler::pCmd compiler::to_cmd(OperationEnum oper, pOperand operand) {
+  return pCmd(new Cmd1(oper, operand));
+};
+compiler::pCmd compiler::to_cmd(OperationEnum oper, RegisterEnum to, RegisterEnum src) {
+  return pCmd(new Cmd2(oper, pOperand(new Reg(to)), pOperand(new Reg(src))));
+};
+compiler::pCmd compiler::to_cmd(OperationEnum oper, RegisterEnum reg, const std::string& val) {
+  return pCmd(new Cmd2(oper, pOperand(new Reg(reg)), pOperand(new ImmString(val))));
+};
+compiler::pCmd compiler::to_cmd(OperationEnum oper, RegisterEnum reg, int val) {
+  return pCmd(new Cmd2(oper, pOperand(new Reg(reg)), pOperand(new ImmInt(val))));
+};
+compiler::pCmd compiler::to_cmd(OperationEnum oper, pOperand operand, RegisterEnum reg) {
+  return pCmd(new Cmd2(oper, operand, pOperand(new Reg(reg))));
+};
+compiler::pCmd compiler::to_cmd(OperationEnum oper, RegisterEnum reg, pOperand operand) {
+  return pCmd(new Cmd2(oper, pOperand(new Reg(reg)), operand));
 };

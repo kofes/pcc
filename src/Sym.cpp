@@ -1,17 +1,21 @@
-#include "../inc/Sym.hpp"
+#include "../inc/Parser.hpp"
 
 std::string compiler::SymVar::print ( unsigned int deep ) {
   std::ostringstream sstream;
 
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << this->name << ':'
+          << name << ':'
           << static_cast<char>(this->glob) << ':';
   if (type == nullptr)
       sstream << "<untyped>";
-  else
-      sstream << this->type->print(0);
-  if (this->value.length())
-    sstream << ':' << this->value;
+  else {
+    if (type->symType == SymEnum::Record)
+      sstream << '\n' << type->print(deep+1);
+    else
+      sstream << type->print(0);
+  }
+  if (value.length())
+    sstream << ':' << value;
 
   return sstream.str();
 };
@@ -110,7 +114,7 @@ std::string compiler::TypePointer::print ( unsigned int deep ) {
     sstream << "^(" << elemType->print(0) << ')';
   else
     sstream << "^()";
-  
+
   return sstream.str();
 };
 //TAG: TYPE/ALIAS, NAME: nameNewType, TYPE: what is type was copied?
@@ -118,8 +122,8 @@ std::string compiler::TypeAlias::print ( unsigned int deep ) {
   std::ostringstream sstream;
 
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
-          << this->name << "=";
-  if (this->type->symType == SymEnum::Record)
+          << name << "=";
+  if (type->symType == SymEnum::Record)
     sstream << '\n' << type->print(deep+1);
   else
     sstream << type->print(0);
@@ -142,3 +146,49 @@ compiler::TypeScalar::TypeScalar ( SCALAR_TYPE tp ) {
   this->type = tp;
   this->symType = SymEnum::Scalar;
 };
+
+bool compiler::operator== (pSymType type1, pSymType type2) {
+  if (type1 == nullptr && type2 == nullptr)
+    return true;
+  if (type1 == nullptr || type2 == nullptr)
+    return false;
+  type1 = evalAlias(type1);
+  type2 = evalAlias(type2);
+  if (type1->symType != type2->symType)
+    return false;
+  pSymTable left, right;
+  SCALAR_TYPE tp1, tp2;
+  switch (type1->symType) {
+    case (SymEnum::Array):
+    return std::dynamic_pointer_cast<TypeArray>(type1)->elemType == std::dynamic_pointer_cast<TypeArray>(type2)->elemType;
+    case (SymEnum::Pointer):
+    return std::dynamic_pointer_cast<TypePointer>(type1)->elemType == std::dynamic_pointer_cast<TypePointer>(type2)->elemType;
+    case (SymEnum::Record):
+    return std::dynamic_pointer_cast<TypeRecord>(type1)->name == std::dynamic_pointer_cast<TypeRecord>(type2)->name;
+    case (SymEnum::Scalar):
+      tp1 = std::dynamic_pointer_cast<TypeScalar>(type1)->type;
+      tp2 = std::dynamic_pointer_cast<TypeScalar>(type2)->type;
+      if (((tp1 == SCALAR_TYPE::INTEGER || tp1 == SCALAR_TYPE::REAL) &&
+          (tp2 == SCALAR_TYPE::INTEGER || tp2 == SCALAR_TYPE::REAL)) ||
+          tp1 == tp2)
+        return true;
+    return false;
+    default: return false;
+  }
+};
+
+bool compiler::operator!= (pSymType type1, pSymType type2) {
+  return !(type1 == type2);
+};
+// void compiler::SymFunc::generate(Generator& asmGenerator) {
+//   for (auto elem : varTable)
+//     elem.second->generate(asmGenerator);
+//   asmGenerator.addLabel(name + std::to_string(level));
+//   asmGenerator.addCmd(to_cmd(OperationEnum::push_, RegisterEnum::rbp_));
+//   asmGenerator.addCmd(to_cmd(OperationEnum::mov_, RegisterEnum::rbp_, RegisterEnum::rsp_));
+//   asmGenerator.addCmd(to_cmd(OperationEnum::sub_, RegisterEnum::rsp_, size_table));
+//   body->generate(asmGenerator);
+//   asmGenerator.addCmd(to_cmd(OperationEnum::mov_, RegisterEnum::rsp_, RegisterEnum::rbp_));
+//   asmGenerator.addCmd(to_cmd(OperationEnum::pop_, RegisterEnum::rbp_));
+//   asmGenerator.addCmd(to_cmd(OperationEnum::ret_));
+// };

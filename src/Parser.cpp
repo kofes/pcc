@@ -57,769 +57,11 @@ void compiler::Parser::parse ( void ) {
       case (Tag::VAR) : parseVar(varTable, typeTable); break;
       case (Tag::FUNCTION) : parseFunction(); break;
       case (Tag::PROCEDURE) : parseFunction(false); break;
-      case (Tag::BEGIN) : root = parseBlock(); return;
+      case (Tag::BEGIN) : root = parseBlock(varTable); return;
       default : err("`begin statement`");
     }
     programTokenChecked = true;
   }
-};
-
-compiler::pStmt compiler::Parser::parseStmt ( void ) {
-  switch (scanner.lex().tag) {
-    case (Tag::IF) : return parseIf();
-    case (Tag::WHILE) : return parseWhile();
-    case (Tag::REPEAT) : return parseRepeat();
-    case (Tag::FOR) : return parseFor();
-    case (Tag::SEMICOLON) : return parseEmpty();
-    case (Tag::BEGIN) : return parseBlock();
-    case (Tag::BREAK):
-      return parseBreak();
-    case (Tag::CONTINUE):
-      return parseContinue();
-    case (Tag::WRITELN):
-    case (Tag::WRITE):
-    case (Tag::READ):
-    case (Tag::READLN):
-    case (Tag::IDENTIFIER):
-      return parseSimpleStmt();
-    default : break;
-  }
-  err("`Statement`");
-  return pStmt();
-};
-
-compiler::pStmt compiler::Parser::parseSimpleStmt ( void ) {
-  Lexeme lexeme = scanner.lex();
-  scanner.next();
-  pExpr expr = parseIdentifier(lexeme);
-
-  lexeme = scanner.lex();
-
-  if (lexeme.tag == Tag::COLON_EQUALS) {
-    std::shared_ptr<StmtAssignment> assignmentStmt(new StmtAssignment);
-    assignmentStmt->variable = expr;
-
-    scanner.next();
-    lexeme = scanner.lex();
-
-    assignmentStmt->value = parseExpr(Priority::LOWEST);
-
-    return assignmentStmt;
-  }
-
-  if (expr->exprType != ExprEnum::Function)
-    err("`Statement`");
-  std::shared_ptr<StmtProcedure> procStmt(new StmtProcedure);
-  procStmt->value = expr;
-
-  scanner.next();
-
-  return procStmt;
-};
-
-compiler::pStmt compiler::Parser::parseBreak ( void ) {
-  std::shared_ptr<StmtBreak> stmt(new StmtBreak);
-  Lexeme lexeme;
-  scanner.next();
-  lexeme = scanner.lex();
-  if (lexeme.tag != Tag::SEMICOLON)
-    err("';'");
-  scanner.next();
-  return stmt;
-};
-
-compiler::pStmt compiler::Parser::parseContinue ( void ) {
-  std::shared_ptr<StmtContinue> stmt(new StmtContinue);
-  Lexeme lexeme;
-  scanner.next();
-  lexeme = scanner.lex();
-  if (lexeme.tag != Tag::SEMICOLON)
-    err("';'");
-  scanner.next();
-  return stmt;
-};
-
-compiler::pStmt compiler::Parser::parseIf ( void ) {
-  std::shared_ptr<StmtIf> ifStmt(new StmtIf);
-
-  scanner.next();
-  ifStmt->condition = parseExpr(Priority::LOWEST);
-
-  Lexeme lexeme = scanner.lex();
-  if (lexeme.tag != Tag::THEN)
-    err("THEN");
-
-  scanner.next();
-
-  ifStmt->ifBody = parseStmt();
-
-  lexeme = scanner.lex();
-
-  if (lexeme.tag == Tag::ELSE) {
-    scanner.next();
-    ifStmt->elseBody = parseStmt();
-  }
-
-  return ifStmt;
-};
-
-compiler::pStmt compiler::Parser::parseWhile ( void ) {
-  std::shared_ptr<StmtWhile> whileStmt(new StmtWhile);
-
-  scanner.next();
-  whileStmt->condition = parseExpr(Priority::LOWEST);
-
-  Lexeme lexeme = scanner.lex();
-  if (lexeme.tag != Tag::DO)
-    err("DO");
-
-  scanner.next();
-
-  whileStmt->body = parseStmt();
-
-  return whileStmt;
-};
-
-compiler::pStmt compiler::Parser::parseRepeat ( void ) {
-  std::shared_ptr<StmtRepeat> repeatStmt(new StmtRepeat);
-
-  scanner.next();
-
-  while (scanner.lex().tag != Tag::UNTIL) {
-    pStmt stmt = parseStmt();
-    if (stmt->stmtType == StmtEnum::Empty)
-      continue;
-    repeatStmt->add(stmt);
-    if (scanner.lex().tag == Tag::SEMICOLON)
-      scanner.next();
-    else if (scanner.lex().tag != Tag::UNTIL)
-      err("UNTIL");
-  }
-
-  scanner.next();
-
-  repeatStmt->condition = parseExpr(Priority::LOWEST);
-
-  return repeatStmt;
-};
-
-compiler::pStmt compiler::Parser::parseFor ( void ) {
-  std::shared_ptr<StmtFor> forStmt(new StmtFor);
-
-  scanner.next();
-  Lexeme lexeme = scanner.lex();
-
-  if (lexeme.tag != Tag::IDENTIFIER)
-    err("`variable`");
-
-  forStmt->variableName = lexeme;
-
-  scanner.next();
-  lexeme = scanner.lex();
-  if (lexeme.tag != Tag::COLON_EQUALS)
-    err(":=");
-
-  scanner.next();
-  forStmt->initVal = parseExpr(Priority::LOWEST);
-
-  lexeme = scanner.lex();
-  if (lexeme.tag != Tag::TO && lexeme.tag != Tag::DOWNTO)
-    err("TO/DOWNTO");
-
-  forStmt->type = lexeme.tag;
-
-  scanner.next();
-  forStmt->finalVal = parseExpr(Priority::LOWEST);
-
-  lexeme = scanner.lex();
-  if (lexeme.tag != Tag::DO)
-    err("DO");
-
-  scanner.next();
-
-  forStmt->body = parseStmt();
-
-  return forStmt;
-};
-
-compiler::pStmt compiler::Parser::parseEmpty ( void ) {
-  pStmt res = pStmt(new StmtEmpty);
-  scanner.next();
-  return res;
-};
-
-compiler::pStmt compiler::Parser::parseBlock ( void ) {
-  std::shared_ptr<StmtBlock> block(new StmtBlock);
-  scanner.next();
-  while (scanner.lex().tag != Tag::END) {
-    pStmt stmt = parseStmt();
-    if (stmt->stmtType == StmtEnum::Empty)
-      continue;
-    block->add(stmt);
-    if (scanner.lex().tag == Tag::SEMICOLON)
-      scanner.next();
-    else if (scanner.lex().tag != Tag::END)
-      err("END");
-  }
-  scanner.next();
-  return block;
-};
-
-compiler::pSymType compiler::Parser::parseType ( SymTable& vTable, TypeTable& tTable ) {
-  pSymType type = nullptr;
-  Lexeme lexeme = scanner.lex();
-  switch (lexeme.tag) {
-    case (Tag::ARRAY) :
-      type = parseArray(vTable, tTable);
-    break;
-    // case (Tag::SET) :
-    case (Tag::POINTER) :
-      type = parsePointer(vTable, tTable);
-    break;
-    default :
-      auto iter = typeTable.find(lexeme.name);
-      if (iter == typeTable.end())
-        errUndefType();
-      type = iter->second;
-  }
-
-  scanner.next();
-  lexeme = scanner.lex();
-
-  return type;
-};
-
-compiler::pSymType compiler::Parser::parseArray ( SymTable& vTable, TypeTable& tTable ) {
-  std::shared_ptr<TypeArray> vArray = nullptr;
-  pSymType type = pSymType(new TypeArray("ARRAY"));
-  Lexeme lexeme = scanner.lex();
-  while (lexeme.tag == Tag::ARRAY) {
-    scanner.next();
-    lexeme = scanner.lex();
-    //Checking for static array
-    if (lexeme.tag == Tag::LEFT_BRACKET) {
-      do {
-        if (vArray == nullptr)
-          vArray = std::dynamic_pointer_cast<TypeArray>(type);
-        else {
-          lexeme.name = "ARRAY";
-          lexeme.tag = Tag::ARRAY;
-          lexeme.token = Token::IDENTIFIER;
-          vArray->elemType = pSymType(new TypeArray(lexeme.name));
-          vArray = std::dynamic_pointer_cast<TypeArray>(vArray->elemType);
-        }
-        Lexeme dbg_lex = lexeme;
-
-        scanner.next();
-        lexeme = scanner.lex();
-
-        //Parse LOW
-        pExpr local_root = parseExpr(Priority::LOWEST);
-        pExpr tmp = evalConstExpr(local_root, vTable, tTable);
-        if (tmp->exprType != ExprEnum::Integer)
-          throw ExprException("Unexpected token '" + tmp->name + "' in pos ("
-          + std::to_string(tmp->row) + ", " + std::to_string(tmp->column) +
-          "); expected 'integer literal/const integer expected';");
-        vArray->low = std::strtoll(tmp->name.c_str(), nullptr, 10);
-        //
-        if (scanner.lex().tag != Tag::DOUBLE_DOT)
-          err("'..'");
-        scanner.next();
-        lexeme = scanner.lex();
-        //Parse HIGH
-        local_root = parseExpr(Priority::LOWEST);
-        tmp = evalConstExpr(local_root, vTable, tTable);
-        if (tmp->exprType != ExprEnum::Integer)
-          throw ExprException("Unexpected token '" + tmp->name + "' in pos ("
-          + std::to_string(tmp->row) + ", " + std::to_string(tmp->column) +
-          "); expected 'integer literal/const integer expected';");
-        vArray->high = std::strtoll(tmp->name.c_str(), nullptr, 10);
-        //
-        if (vArray->high < vArray->low)
-          errHighLow(dbg_lex);
-      } while (scanner.lex().tag == Tag::COMMA);
-
-      //ONLY STATIC ARRAY!
-      if (scanner.lex().tag != Tag::RIGHT_BRACKET) err("]");
-      scanner.next();
-      lexeme = scanner.lex();
-    } else {
-      vArray = std::dynamic_pointer_cast<TypeArray>(type);
-      vArray->high = 0;
-      vArray->low = 1;
-    }
-    if (lexeme.tag != Tag::OF) err("OF");
-    scanner.next();
-    lexeme = scanner.lex();
-  }
-  auto iter = typeTable.find(lexeme.name);
-  if (iter == typeTable.end())
-    errUndefType();
-  vArray->elemType = iter->second;
-
-  return type;
-};
-
-compiler::pSymType compiler::Parser::parseRecord ( SymTable& vTable, TypeTable& tTable ) {
-  std::shared_ptr<TypeRecord> vRecord(new TypeRecord("RECORD"));
-  std::vector<pSymVar> var;
-  vRecord->field = pSymTable(new SymTable);
-
-  scanner.next();
-  Lexeme lexeme = scanner.lex();
-
-  if (lexeme.tag != Tag::IDENTIFIER)
-    err("`identifier`");
-  for (;lexeme.tag == Tag::IDENTIFIER; scanner.next(), lexeme = scanner.lex()) {
-    //Check in field
-    vRecord->checkIdent(lexeme);
-    var.push_back(pSymVar(new SymVar(lexeme.name)));
-
-    scanner.next();
-    lexeme = scanner.lex();
-
-    for (;lexeme.tag == Tag::COMMA; scanner.next(), lexeme = scanner.lex()) {
-      scanner.next();
-      lexeme = scanner.lex();
-
-      vRecord->checkIdent(lexeme);
-      var.push_back(pSymVar(new SymVar(lexeme.name)));
-    }
-
-    if (lexeme.tag != Tag::COLON)
-      err("':'");
-
-    scanner.next();
-    pSymType type = parseType(vTable, tTable);
-    lexeme = scanner.lex();
-    if (lexeme.tag != Tag::EQUALS && lexeme.tag != Tag::SEMICOLON)
-      err("';'");
-    if (scanner.lex().tag == Tag::EQUALS) {
-      if (var.size() != 1)
-        err("';'");
-      if (type->symType == SymEnum::Array) {
-        if (std::dynamic_pointer_cast<TypeArray>(type)->elemType->symType == SymEnum::Array ||
-            std::dynamic_pointer_cast<TypeArray>(type)->low >
-            std::dynamic_pointer_cast<TypeArray>(type)->high)
-          err("';'");
-        //Now only 1D massives
-        scanner.next();
-        lexeme = scanner.lex();
-        if (lexeme.tag != Tag::LEFT_PARENTHESIS)
-          err("'('");
-        scanner.next();
-        lexeme = scanner.lex();
-        std::shared_ptr<TypeArray> arr = std::dynamic_pointer_cast<TypeArray>(type);
-        //allocate only for 1D massive for initizalization!
-        if (!std::dynamic_pointer_cast<TypeArray>(arr)->values.size())
-          arr->values.resize(arr->high - arr->low + 1);
-        for (unsigned long long i = arr->low; i <= arr->high; ++i, scanner.next(), lexeme = scanner.lex()) {
-          pExpr local_root = parseExpr(Priority::LOWEST);
-          pExpr tmp = evalConstExpr(local_root, vTable, tTable);
-          //TODO: check type of tmp end evaluate to array
-          arr->values[i-arr->low] = checkType(arr->values[i-arr->low], arr->elemType, tmp, vTable, tTable);
-          lexeme = scanner.lex();
-          if (i < arr->high && lexeme.tag != Tag::COMMA)
-            err("','");
-          if (i == arr->high && lexeme.tag != Tag::RIGHT_PARENTHESIS)
-            err("')'");
-        }
-      } else {
-        scanner.next();
-        lexeme = scanner.lex();
-        pExpr local_root = parseExpr(Priority::LOWEST);
-        pExpr tmp = evalConstExpr(local_root, vTable, tTable);
-        var.front() = checkType(var.front(), var.front()->type, tmp, vTable, tTable);
-      }
-    }
-
-    for (pSymVar& elem : var) {
-      elem->type = type;
-      elem->glob = compiler::GLOB::VAR;
-      vRecord->field->emplace(elem->name, elem);
-    }
-    var.clear();
-    if (scanner.lex().tag != Tag::SEMICOLON)
-      err("';'");
-  }
-  if (scanner.lex().tag != Tag::END)
-    err("END");
-  scanner.next();
-  return vRecord;
-};
-
-compiler::pSymType compiler::Parser::parseEnum ( void ) {};
-
-compiler::pSymType compiler::Parser::parsePointer ( SymTable& vTable, TypeTable& tTable ) {
-    std::shared_ptr<TypePointer> type(new TypePointer(scanner.lex().name));
-    scanner.next();
-    Lexeme lexeme = scanner.lex();
-    auto iter = tTable.find(lexeme.name);
-    if (iter == tTable.end()) {
-      iter = typeTable.find(lexeme.name);
-      if (iter == typeTable.end())
-        errUndefType();
-    }
-    type->elemType = iter->second;
-
-    return type;
-};
-
-void compiler::Parser::parseProgramName ( const compiler::Lexeme& program ) {
-  scanner.next();
-  compiler::Lexeme lexeme = scanner.lex();
-  if (lexeme.tag != Tag::IDENTIFIER)
-    err("`program name`");
-
-  std::shared_ptr<compiler::SymVar> var = std::shared_ptr<compiler::SymVar>(new SymVar(program.name));
-  var->glob = compiler::GLOB::CONST;
-  var->type = std::shared_ptr<compiler::SymType>(new SymType(program.name));
-  varTable[lexeme.name] = var;
-
-  scanner.next();
-  lexeme = scanner.lex();
-  if (lexeme.tag != Tag::SEMICOLON)
-    err("';'");
-  scanner.next();
-};
-
-void compiler::Parser::parseConst ( SymTable& vTable, TypeTable& tTable ) {
-  scanner.next();
-  Lexeme lexeme = scanner.lex();
-  pExpr local_root, tmp;
-  if (lexeme.tag != Tag::IDENTIFIER)
-    err("`identifier`");
-  for (; lexeme.tag == Tag::IDENTIFIER; scanner.next(), lexeme = scanner.lex()) {
-
-    checkIdent(lexeme, vTable, tTable);
-    checkFunc(lexeme, IdentifierType::VARIABLE);
-
-    pSymVar var = pSymVar(new SymVar(lexeme.name));
-
-    scanner.next();
-    lexeme = scanner.lex();
-
-    var->type = nullptr;
-
-    switch (lexeme.tag) {
-      case(Tag::COLON) :
-        scanner.next();
-        var->type = parseType(vTable, tTable);
-        //NOW scanner.lex().tag == ';'/'='
-        lexeme = scanner.lex();
-        if (lexeme.tag != Tag::EQUALS && lexeme.tag != Tag::SEMICOLON)
-          err("';'");
-        var->glob = GLOB::VAR;
-      break;
-      case (Tag::EQUALS) :
-        var->glob = compiler::GLOB::CONST;
-        scanner.next();
-        lexeme = scanner.lex();
-        //NOW PARSE CONST EXPR
-        local_root = parseExpr(Priority::LOWEST);
-        tmp = evalConstExpr(local_root, vTable, tTable);
-        var = checkType(var, var->type, tmp, vTable, tTable);
-      break;
-      default :
-        err("'='");
-      break;
-    }
-
-    if (scanner.lex().tag != Tag::SEMICOLON)
-      err("';'");
-
-    vTable[var->name] = var;//TO UPPERCASE!
-  }
-};
-
-void compiler::Parser::parseVar ( SymTable& vTable, TypeTable& tTable ) {
-  std::vector<pSymVar> var;
-
-  scanner.next();
-  Lexeme lexeme = scanner.lex();
-  if (lexeme.tag != Tag::IDENTIFIER)
-    err("`identifier`");
-
-  for (;lexeme.tag == Tag::IDENTIFIER; scanner.next(), lexeme = scanner.lex()) {
-    checkIdent(lexeme, vTable, tTable);
-    checkFunc(lexeme, IdentifierType::VARIABLE);
-
-    var.push_back(pSymVar(new SymVar(lexeme.name)));
-
-    scanner.next();
-    lexeme = scanner.lex();
-
-    for (;lexeme.tag == Tag::COMMA; scanner.next(), lexeme = scanner.lex()) {
-      scanner.next();
-      lexeme = scanner.lex();
-
-      checkIdent(lexeme, vTable, tTable);
-      checkFunc(lexeme, IdentifierType::VARIABLE);
-      var.push_back(pSymVar(new SymVar(lexeme.name)));
-    }
-
-    if (lexeme.tag != Tag::COLON)
-      err("':'");
-
-    scanner.next();
-    pSymType type = parseType(vTable, tTable);
-    lexeme = scanner.lex();
-    if (lexeme.tag != Tag::EQUALS && lexeme.tag != Tag::SEMICOLON)
-      err("';'");
-    if (scanner.lex().tag == Tag::EQUALS) {
-      if (var.size() != 1)
-        err("';'");
-      if (type->symType == SymEnum::Array) {
-        if (std::dynamic_pointer_cast<TypeArray>(type)->elemType->symType == SymEnum::Array ||
-            std::dynamic_pointer_cast<TypeArray>(type)->low >
-            std::dynamic_pointer_cast<TypeArray>(type)->high)
-          err("';'");
-        //Now only 1D massives
-        scanner.next();
-        lexeme = scanner.lex();
-        if (lexeme.tag != Tag::LEFT_PARENTHESIS)
-          err("'('");
-        scanner.next();
-        lexeme = scanner.lex();
-        std::shared_ptr<TypeArray> arr = std::dynamic_pointer_cast<TypeArray>(type);
-        //allocate only for 1D massive for initizalization!
-        if (!std::dynamic_pointer_cast<TypeArray>(arr)->values.size())
-          arr->values.resize(arr->high - arr->low + 1);
-        for (unsigned long long i = arr->low; i <= arr->high; ++i, scanner.next(), lexeme = scanner.lex()) {
-          pExpr local_root = parseExpr(Priority::LOWEST);
-          pExpr tmp = evalConstExpr(local_root, vTable, tTable);
-          //TODO: check type of tmp end evaluate to array
-          arr->values[i-arr->low] = checkType(arr->values[i-arr->low], arr->elemType, tmp, vTable, tTable);
-          lexeme = scanner.lex();
-          if (i < arr->high && lexeme.tag != Tag::COMMA)
-            err("','");
-          if (i == arr->high && lexeme.tag != Tag::RIGHT_PARENTHESIS)
-            err("')'");
-        }
-      } else {
-        scanner.next();
-        lexeme = scanner.lex();
-        pExpr local_root = parseExpr(Priority::LOWEST);
-        pExpr tmp = evalConstExpr(local_root, vTable, tTable);
-        var.front() = checkType(var.front(), type, tmp, vTable, tTable);
-      }
-    }
-
-    for (pSymVar& elem : var) {
-      elem->type = type;
-      elem->glob = compiler::GLOB::VAR;
-      vTable[elem->name] = elem;
-    }
-    var.clear();
-    if (scanner.lex().tag != Tag::SEMICOLON)
-      err("';'");
-  }
-};
-
-void compiler::Parser::parseFunction ( bool expectRetVal ) {
-  scanner.next();
-  Lexeme lexeme = scanner.lex();
-  Lexeme funcName = lexeme;
-  //Pascal feature: function result variable has name like a name of function
-  checkIdent(funcName, varTable, typeTable);
-
-  std::shared_ptr<SymFunc> func(new SymFunc(funcName.name));
-
-  scanner.next();
-  lexeme = scanner.lex();
-  std::string args;
-  func->params = nullptr;
-  if (lexeme.tag == Tag::LEFT_PARENTHESIS) {
-    scanner.next();
-    std::tie(func->params, args) = parseParams();
-    //NOW scanner.lex().name == ")"
-    scanner.next();
-    lexeme = scanner.lex();
-  }
-
-  checkFunc(funcName, IdentifierType::FUNCTION, args);
-
-  //
-  if (expectRetVal) {
-    if (lexeme.tag != Tag::COLON)
-      err("':'");
-
-    scanner.next();
-    func->retType = parseType(varTable, typeTable);
-    lexeme = scanner.lex();
-    if (lexeme.tag != Tag::SEMICOLON)
-      err("';'");
-  } else
-    if (lexeme.tag != Tag::SEMICOLON)
-      err("';'");
-  //
-
-  //NOW scanner.lex().name == ";"
-
-  scanner.next();
-  lexeme = scanner.lex();
-
-  while (lexeme.tag != Tag::BEGIN) {
-    switch (lexeme.tag) {
-      case (Tag::TYPE) : parseAlias(func->varTable, func->typeTable); break;
-      case (Tag::VAR) : parseVar(func->varTable, func->typeTable); break;
-      case (Tag::CONST) : parseConst(func->varTable, func->typeTable); break;
-      default: err("`begin statement`");
-    }
-  }
-
-  //NOW scanner.lex().name == "BEGIN"
-
-  func->body = parseBlock();
-
-  //NOW scanner.lex().name == ";"
-
-  if (scanner.lex().tag != Tag::SEMICOLON)
-    err("';'");
-
-  funcTable[func->name][args] = func;
-
-  scanner.next();
-  lexeme = scanner.lex();
-};
-
-void compiler::Parser::parseAlias ( SymTable& vTable, TypeTable& tTable ) {
-  scanner.next();
-  compiler::Lexeme lexeme = scanner.lex();
-  if (lexeme.tag != Tag::IDENTIFIER)
-    err("`identifier`");
-  while (lexeme.tag == Tag::IDENTIFIER) {
-
-    checkIdent(lexeme, vTable, tTable);
-    checkFunc(lexeme, IdentifierType::TYPE);
-
-    Lexeme ident = lexeme;
-    std::shared_ptr<TypeAlias> alias(new TypeAlias(ident.name));
-
-    scanner.next();
-    lexeme = scanner.lex();
-
-    if (lexeme.tag != Tag::EQUALS)
-      err("'='");
-
-    scanner.next();
-    lexeme = scanner.lex();
-
-    switch (lexeme.tag) {
-      case (Tag::RECORD): alias->type = parseRecord(vTable, tTable); break;
-      // case (Tag::LEFT_PARENTHESIS): alias->type = parseEnum(); break;
-      default:
-        alias->type = parseType(vTable, tTable);
-        lexeme = scanner.lex();
-        if (lexeme.tag != Tag::SEMICOLON)
-          err("';'");
-      break;
-    }
-    lexeme = scanner.lex();
-
-    if (lexeme.tag != Tag::SEMICOLON)
-      err("';'");
-
-    tTable[alias->name] = alias;
-
-    scanner.next();
-    lexeme = scanner.lex();
-  }
-};
-
-compiler::pExpr compiler::Parser::parseExpr ( const compiler::Priority& priority ) {
-  if (priority == Priority::HIGHEST)
-    return parseFactor();
-  compiler::pExpr left = parseExpr(upPriority(priority));
-  compiler::Lexeme lexeme = scanner.lex();
-  while (checkPriority(priority, lexeme.tag)) {
-    scanner.next();
-    compiler::pExpr right = parseExpr(upPriority(priority));
-    left = compiler::pExpr(new compiler::ExprBinOp(lexeme, left, right));
-    lexeme = scanner.lex();
-  }
-  return left;
-};
-
-compiler::pExpr compiler::Parser::parseFactor ( void ) {
-  compiler::pExpr tmpExpr;
-  compiler::Lexeme lexeme = scanner.lex();
-  scanner.next();
-
-  if (isUnary(lexeme.tag))
-    return compiler::pExpr(new ExprUnOp(lexeme, parseExpr(Priority::HIGHEST)));
-
-  switch (lexeme.tag) {
-    case (Tag::IDENTIFIER) : return parseIdentifier(lexeme);
-    case (Tag::INTEGER) : return pExpr(new ExprInteger(lexeme));
-    case (Tag::FLOAT) : return pExpr(new ExprReal(lexeme));
-    case (Tag::CHARACTER) : return pExpr(new ExprChar(lexeme));
-    case (Tag::STRING) : return pExpr(new ExprString(lexeme));
-    case (Tag::LEFT_PARENTHESIS) :
-      tmpExpr = parseExpr(compiler::Priority::LOWEST);
-      lexeme = scanner.lex();
-
-      if (lexeme.tag != Tag::RIGHT_PARENTHESIS) {
-        if (lexeme.token == Token::END_OF_FILE) err();
-        err(")");
-      }
-
-      scanner.next();
-    return tmpExpr;
-    case (Tag::B_TRUE):
-    case (Tag::B_FALSE):
-    case (Tag::NIL):
-      return pExpr(new ExprIdentifier(lexeme));
-    default: break;
-  }
-
-  if (lexeme.token == Token::END_OF_FILE) err();
-  err(lexeme);
-  return compiler::pExpr(new Expr(lexeme));
-};
-
-compiler::pExpr compiler::Parser::parseIdentifier ( compiler::Lexeme lexeme ) {
-  compiler::pExpr left = compiler::pExpr(new ExprIdentifier(lexeme));
-
-  while (true) {
-    lexeme = scanner.lex();
-    compiler::Lexeme tmpLex;
-    std::vector< compiler::pExpr > args;
-    compiler::pExpr right;
-    switch (lexeme.tag) {
-      case (Tag::DOT):
-        tmpLex = lexeme;
-        scanner.next();
-        lexeme = scanner.lex();
-        if (lexeme.token == Token::END_OF_FILE) err();
-        if (lexeme.tag != Tag::IDENTIFIER) err("`identifier`");
-        right = compiler::pExpr(new ExprIdentifier(lexeme));
-        left = compiler::pExpr(new ExprRecordAccess(tmpLex, left, right));
-      break;
-      case (Tag::LEFT_BRACKET):
-        tmpLex = lexeme;
-        args = parseArgs();
-        left = compiler::pExpr(new ExprArrayIndex(tmpLex, left, args));
-        lexeme = scanner.lex();
-        if (lexeme.token == Token::END_OF_FILE) err();
-        if (lexeme.tag != Tag::RIGHT_BRACKET) err("]");
-      break;
-      case (Tag::POINTER):
-        left = compiler::pExpr(new ExprUnOp(lexeme, left));
-      break;
-      case (Tag::LEFT_PARENTHESIS):
-        tmpLex = lexeme;
-        args = parseArgs();
-        left = compiler::pExpr(new ExprFunc(tmpLex, left, args));
-        lexeme = scanner.lex();
-        if (lexeme.token == Token::END_OF_FILE) err();
-        if (lexeme.tag != Tag::RIGHT_PARENTHESIS) err(")");
-      break;
-      default: return left;
-    }
-    scanner.next();
-  }
-  return left;
 };
 
 std::string compiler::Parser::print ( void ) {
@@ -940,9 +182,21 @@ void compiler::Parser::errDuplicated ( void ) {
   throw ExprException("Duplicate identifier \"" + lexeme.name + "\" in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
 };
 
+void compiler::Parser::errAssignment ( const Lexeme& lexeme ) {
+  throw ExprException("Bad assignment at line: " + std::to_string(lexeme.row) + ";");
+};
+
 void compiler::Parser::errHighLow ( const compiler::Lexeme& lexeme ) {
-  throw ExprException("array 'high' < 'low' from pos(" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
-}
+  throw ExprException("Array 'high' < 'low' from pos ("+std::to_string(lexeme.row)+", "+std::to_string(lexeme.column)+");");
+};
+
+void compiler::Parser::errDecl ( const compiler::Lexeme& lexeme ) {
+  throw ExprException("Identifier "+lexeme.name+" at pos ("+std::to_string(lexeme.row)+", "+std::to_string(lexeme.column)+") wasn't declared;");
+};
+
+void compiler::Parser::errConst ( const Lexeme& lexeme ) {
+  throw ExprException("Const "+lexeme.name+" at pos ("+std::to_string(lexeme.row)+", "+std::to_string(lexeme.column)+") assignment;");
+};
 
 void compiler::Parser::checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable ) {
   if (lexeme.tag != Tag::IDENTIFIER)
@@ -950,7 +204,9 @@ void compiler::Parser::checkIdent ( const Lexeme& lexeme, SymTable& vTable, Type
   if (varTable.find(lexeme.name) != varTable.end()  ||
         vTable.find(lexeme.name) != vTable.end()    ||
      typeTable.find(lexeme.name) != typeTable.end() ||
-        tTable.find(lexeme.name) != tTable.end())
+        tTable.find(lexeme.name) != tTable.end()   ||
+     lexeme.name == "write" || lexeme.name == "writeln" ||
+     lexeme.name == "read" || lexeme.name == "readln")
     errDuplicated();
 };
 
@@ -1006,7 +262,8 @@ std::tuple<compiler::pSymTable, std::string> compiler::Parser::parseParams( void
   Lexeme lexeme = scanner.lex();
   pSymTable resTable(new SymTable);
   std::ostringstream sstream;
-
+  size_t countArgs = 0;
+  pSymType type = nullptr;
   while ((lexeme.tag == Tag::IDENTIFIER) ||
          lexeme.tag == Tag::CONST ||
          lexeme.tag == Tag::VAR ||
@@ -1029,34 +286,37 @@ std::tuple<compiler::pSymTable, std::string> compiler::Parser::parseParams( void
     if (lexeme.tag != Tag::IDENTIFIER)
       err("`parameter`");
     std::vector<pSymVar> vars;
-    do {
-      vars.push_back(pSymVar(new SymVar(lexeme.name)));
+    vars.push_back(pSymVar(new SymVar(lexeme.name)));
+    scanner.next();
+    lexeme = scanner.lex();
+    for (;lexeme.tag == Tag::COMMA; scanner.next(), lexeme = scanner.lex()) {
       scanner.next();
       lexeme = scanner.lex();
-    } while (lexeme.tag == Tag::COMMA);
-    pSymType type = nullptr;
+      vars.push_back(pSymVar(new SymVar(lexeme.name)));
+    }
+    pSymType type_tmp = nullptr;
     switch (glob) {
         case(GLOB::CONST_PARAM):
             if (lexeme.tag == Tag::COLON) {
               scanner.next();
-              type = parseType(varTable, typeTable);
+              type_tmp = parseType(varTable, typeTable);
               lexeme = scanner.lex();
               //NOW scanner.lex().tag == ';'/'='/')'
               if (lexeme.tag != Tag::EQUALS && lexeme.tag != Tag::SEMICOLON && lexeme.tag != Tag::RIGHT_PARENTHESIS)
                 err("')'");
-            }
+            } else type_tmp = nullptr;
             if (lexeme.tag == Tag::EQUALS) {
               if (vars.size() != 1)  err("')'");
               scanner.next();
               pExpr local_root = parseExpr(Priority::LOWEST);
               pExpr tmp = evalConstExpr(local_root, varTable, typeTable);
-              vars.front() = checkType(vars.front(), type, tmp, varTable, typeTable);
+              vars.front() = checkType(vars.front(), type_tmp, tmp, varTable, typeTable);
             }
         break;
         case (GLOB::VAL_PARAM):
             if (lexeme.tag != Tag::COLON) err("':'");
             scanner.next();
-            type = parseType(varTable, typeTable);
+            type_tmp = parseType(varTable, typeTable);
             lexeme = scanner.lex();
             //NOW scanner.lex().tag == ';'/'=/')''
             if (lexeme.tag != Tag::EQUALS && lexeme.tag != Tag::SEMICOLON && lexeme.tag != Tag::RIGHT_PARENTHESIS)
@@ -1066,14 +326,14 @@ std::tuple<compiler::pSymTable, std::string> compiler::Parser::parseParams( void
               scanner.next();
               pExpr local_root = parseExpr(Priority::LOWEST);
               pExpr tmp = evalConstExpr(local_root, varTable, typeTable);
-              vars.front() = checkType(vars.front(), type, tmp, varTable, typeTable);
+              vars.front() = checkType(vars.front(), type_tmp, tmp, varTable, typeTable);
             }
         break;
         case (GLOB::OUT_PARAM):
         case (GLOB::VAR_PARAM):
             if (lexeme.tag == Tag::COLON) {
               scanner.next();
-              type = parseType(varTable, typeTable);
+              type_tmp = parseType(varTable, typeTable);
               lexeme = scanner.lex();
               if (lexeme.tag != Tag::SEMICOLON && lexeme.tag != Tag::RIGHT_PARENTHESIS)
                 err("')'");
@@ -1082,11 +342,20 @@ std::tuple<compiler::pSymTable, std::string> compiler::Parser::parseParams( void
         default: err("'parameter's modificator'");
     };
     //resTable < vars, resStr < str
-    sstream << vars.size();
-    if (type != nullptr) sstream << ':' << type->name;
-    sstream << ';';
+    //type equals over!
+    if (type_tmp != nullptr)
+      type_tmp = evalAlias(type_tmp);
+    if (!countArgs || type == type_tmp) {
+      countArgs += vars.size();
+    } else {
+      sstream << countArgs;
+      if (type != nullptr) sstream << ':' << type->name;
+      sstream << ';';
+      countArgs = vars.size();
+    }
+    type = type_tmp;
     for (pSymVar& elem : vars) {
-      elem->type = type;
+      elem->type = type_tmp;
       elem->glob = glob;
       (*resTable)[elem->name] = elem;
     }
@@ -1101,7 +370,12 @@ std::tuple<compiler::pSymTable, std::string> compiler::Parser::parseParams( void
   }
   if (lexeme.tag != Tag::RIGHT_PARENTHESIS)
     err(")");
-
+  if (countArgs) {
+    sstream << countArgs;
+    if (type != nullptr) sstream << ':' << type->print(0);
+    sstream << ';';
+    countArgs = 0;
+  }
   return std::make_tuple(resTable, sstream.str());
 };
 
@@ -1180,3 +454,15 @@ void compiler::Parser::checkFunc ( const Lexeme& lexeme, IdentifierType type, co
         return;
     throw ExprException("Duplication of function \"" + lexeme.name + "\" in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
 };
+
+void compiler::Parser::generate ( void ) {
+  // for (auto elem : varTable)
+  //   elem.second->generate(asmGenerator);
+  // for (auto arr : funcTable)
+  //   for (auto func : arr.second)
+  //     func.second->generate(asmGenerator);
+  // asmGenerator.addLabel("main");
+  // root->generate(asmGenerator);
+};
+
+std::string compiler::Parser::printAsm ( void ) {};

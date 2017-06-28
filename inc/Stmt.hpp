@@ -19,6 +19,7 @@ typedef std::shared_ptr<Stmt> pStmt;
 struct StmtIf : public Stmt {
   StmtIf ( void ) { stmtType = StmtEnum::If; };
   std::string print ( unsigned int deep ) override;
+  // void generate(Generator& asmGenerator) override;
   pExpr condition;
   pNode ifBody, elseBody;
 };
@@ -26,6 +27,7 @@ struct StmtIf : public Stmt {
 struct StmtWhile : public Stmt {
   StmtWhile ( void ) { stmtType = StmtEnum::While; };
   std::string print ( unsigned int deep ) override;
+  // void generate(Generator& asmGenerator) override;
   pExpr condition;
   pNode body;
 };
@@ -34,6 +36,7 @@ struct StmtRepeat : public Stmt {
   StmtRepeat ( void ) { stmtType = StmtEnum::Repeat; };
   void add ( const pNode& nd );
   std::string print ( unsigned int deep ) override;
+  // void generate(Generator& asmGenerator) override;
   std::vector<pNode> body;
   pExpr condition;
 };
@@ -41,6 +44,7 @@ struct StmtRepeat : public Stmt {
 struct StmtFor : public Stmt {
   StmtFor ( void ) { stmtType = StmtEnum::For; };
   std::string print ( unsigned int deep ) override;
+  // void generate(Generator& asmGenerator) override;
   Lexeme variableName;
   pExpr initVal, finalVal;
   Tag type;
@@ -67,17 +71,20 @@ struct StmtProcedure : public Stmt {
 struct StmtBreak : public Stmt {
   StmtBreak ( void ) { stmtType = StmtEnum::Break; };
   std::string print ( unsigned int deep ) override;
+  // void generate(Generator& asmGenerator) override;
 };
 
 struct StmtContinue : public Stmt {
   StmtContinue ( void ) { stmtType = StmtEnum::Continue; };
   std::string print ( unsigned int deep ) override;
+  // void generate(Generator& asmGenerator) override;
 };
 
 struct StmtBlock : public Stmt {
   StmtBlock ( void ) { stmtType = StmtEnum::Block; };
   void add ( const pNode& nd );
   std::string print ( unsigned int deep ) override;
+  // void generate(Generator& asmGenerator) override;
   std::vector<pNode> node;
 };
 };

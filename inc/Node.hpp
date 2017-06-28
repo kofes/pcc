@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Scanner.hpp"
+#include "Asm.hpp"
 #include <sstream>
 #include <memory>
 #include <exception>
@@ -40,6 +41,7 @@ struct Node {
     sstream << std::string(deep * DEEP_STEP, DEEP_CHAR) << "<ghost node>" << std::endl;
     return sstream.str();
   };
+  // virtual void generate(compiler::Generator& asmGenerator);
   NodeEnum nodeType;
 };
 

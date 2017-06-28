@@ -1,0 +1,8 @@
+type
+	bool = Boolean;
+const
+	i = 10 > 5;
+var
+	id : bool = (i xor true) or true;
+begin
+end
