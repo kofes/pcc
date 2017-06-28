@@ -216,7 +216,7 @@ compiler::pSymType compiler::Parser::evalExprType( pExpr val, SymTable& vTable )
       }
       type = nullptr;
       for (const std::pair< std::string, pSym>& it : iterFunc->second) {
-        if (unification(sstream.str(), it.first)) {
+        if (unification(it.first, sstream.str())) {
           type = std::dynamic_pointer_cast<SymFunc>(it.second)->retType;
           break;
         }
@@ -233,9 +233,56 @@ compiler::pSymType compiler::Parser::evalExprType( pExpr val, SymTable& vTable )
 };
 
 //TODO
-bool compiler::Parser::unification ( const std::string& first, const std::string& second) {
+size_t readCount(const std::string& src, size_t& pos) {
+  std::string val;
+  for (;src[pos] != ':' && src[pos] != ';'; ++pos)
+    val += src[pos];
+  return std::stoll(val);
+};
 
-  return false;
+std::string readType(const std::string& src, size_t& pos) {
+  std::string type;
+  for (;src[pos] != ';'; ++pos)
+    type += src[pos];
+  return type;
+};
+
+bool compiler::Parser::unification ( const std::string& src, const std::string& tmplt) {
+  std::string type1, type2;
+  size_t i1 = 0, i2 = 0, countTmplt, countSrc;
+  countSrc = readCount(src, i1);
+  countTmplt = readCount(tmplt, i2);
+  while (i1 < src.size() && i2 < tmplt.size() && (src[i1] == ':' || src[i1] == ';' )) {
+    if (src[i1] == ';') {
+      if (countSrc > countTmplt) {
+        countSrc -= countTmplt;
+        readType(tmplt, i2);
+        ++i2;
+        countTmplt = readCount(tmplt, i2);
+        continue;
+      } else if (countSrc == countTmplt) {
+        countSrc = countTmplt = 0;
+        readType(tmplt, i2);
+        ++i1;
+        ++i2;
+        countSrc = readCount(src, i1);
+        countTmplt = readCount(tmplt, i2);
+        continue;
+      } else {
+        ++i1;
+        countSrc = readCount(src, i1);
+        continue;
+      }
+    }
+    type1 = readType(src, i1);
+    type2 = readType(tmplt, i2);
+    if (type1 != type2)
+      return false;
+    countSrc = readCount(src, i1);
+    countTmplt = readCount(tmplt, i2);
+  };
+
+  return true;
 };
 
 compiler::pSymType compiler::evalAlias ( pSymType type ) {
