@@ -361,4 +361,4 @@ private:
   int sym, countAph = 0;
   bool accDot = false;
 };
-};
+}

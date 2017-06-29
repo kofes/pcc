@@ -49,7 +49,7 @@ compiler::pSymType compiler::Parser::evalVarType ( pExpr val, SymTable& vTable )
   }
 
   return type;
-};
+}
 
 compiler::pSymType compiler::Parser::evalExprType( pExpr val, SymTable& vTable ) {
   pSymType type = nullptr, rType = nullptr;
@@ -230,7 +230,7 @@ compiler::pSymType compiler::Parser::evalExprType( pExpr val, SymTable& vTable )
   }
 
   return type;
-};
+}
 
 //TODO
 size_t readCount(const std::string& src, size_t& pos) {
@@ -238,14 +238,14 @@ size_t readCount(const std::string& src, size_t& pos) {
   for (;src[pos] != ':' && src[pos] != ';'; ++pos)
     val += src[pos];
   return std::stoll(val);
-};
+}
 
 std::string readType(const std::string& src, size_t& pos) {
   std::string type;
   for (;src[pos] != ';'; ++pos)
     type += src[pos];
   return type;
-};
+}
 
 bool compiler::Parser::unification ( const std::string& src, const std::string& tmplt) {
   std::string type1, type2;
@@ -280,13 +280,13 @@ bool compiler::Parser::unification ( const std::string& src, const std::string& 
       return false;
     countSrc = readCount(src, i1);
     countTmplt = readCount(tmplt, i2);
-  };
+  }
 
   return true;
-};
+}
 
 compiler::pSymType compiler::evalAlias ( pSymType type ) {
   while (type->symType == SymEnum::Alias)
     type = std::dynamic_pointer_cast<TypeAlias>(type)->type;
   return type;
-};
+}

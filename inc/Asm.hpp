@@ -320,4 +320,4 @@ protected:
   size_t countNames, countPushes, countLabels;
 };
 
-};
+}

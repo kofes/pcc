@@ -18,7 +18,7 @@ std::string compiler::SymVar::print ( unsigned int deep ) {
     sstream << ':' << value;
 
   return sstream.str();
-};
+}
 
 std::string compiler::SymFunc::print ( unsigned int deep ) {
   std::ostringstream sstream;
@@ -62,7 +62,7 @@ std::string compiler::SymFunc::print ( unsigned int deep ) {
               << "</procedure>";
   }
   return sstream.str();
-};
+}
 
 std::string compiler::TypeArray::print ( unsigned int deep ) {
   std::ostringstream sstream;
@@ -81,7 +81,7 @@ std::string compiler::TypeArray::print ( unsigned int deep ) {
   }
 
   return sstream.str();
-};
+}
 
 std::string compiler::TypeRecord::print ( unsigned int deep ) {
   std::ostringstream sstream;
@@ -97,14 +97,14 @@ std::string compiler::TypeRecord::print ( unsigned int deep ) {
           << "</record>";
 
   return sstream.str();
-};
+}
 
 void compiler::TypeRecord::checkIdent ( const Lexeme& lexeme ) {
   if (field == nullptr)
     throw ExprException("Record " + name + " hasn't been initialized;");
   if (field->find(lexeme.name) != field->end())
     throw ExprException("Duplicate identifier \"" + lexeme.name + "\" in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
-};
+}
 
 std::string compiler::TypePointer::print ( unsigned int deep ) {
   std::ostringstream sstream;
@@ -116,7 +116,7 @@ std::string compiler::TypePointer::print ( unsigned int deep ) {
     sstream << "^()";
 
   return sstream.str();
-};
+}
 //TAG: TYPE/ALIAS, NAME: nameNewType, TYPE: what is type was copied?
 std::string compiler::TypeAlias::print ( unsigned int deep ) {
   std::ostringstream sstream;
@@ -130,7 +130,7 @@ std::string compiler::TypeAlias::print ( unsigned int deep ) {
 
   return sstream.str();
 
-};
+}
 
 std::string compiler::TypeScalar::print ( unsigned int deep ) {
   std::ostringstream sstream;
@@ -139,13 +139,13 @@ std::string compiler::TypeScalar::print ( unsigned int deep ) {
           << this->name;
 
   return sstream.str();
-};
+}
 
 compiler::TypeScalar::TypeScalar ( SCALAR_TYPE tp ) {
   this->name = tagBook.at(static_cast<compiler::Tag>(tp));
   this->type = tp;
   this->symType = SymEnum::Scalar;
-};
+}
 
 bool compiler::operator== (pSymType type1, pSymType type2) {
   if (type1 == nullptr && type2 == nullptr)
@@ -175,11 +175,11 @@ bool compiler::operator== (pSymType type1, pSymType type2) {
     return false;
     default: return false;
   }
-};
+}
 
 bool compiler::operator!= (pSymType type1, pSymType type2) {
   return !(type1 == type2);
-};
+}
 // void compiler::SymFunc::generate(Generator& asmGenerator) {
 //   for (auto elem : varTable)
 //     elem.second->generate(asmGenerator);
@@ -191,4 +191,4 @@ bool compiler::operator!= (pSymType type1, pSymType type2) {
 //   asmGenerator.addCmd(to_cmd(OperationEnum::mov_, RegisterEnum::rsp_, RegisterEnum::rbp_));
 //   asmGenerator.addCmd(to_cmd(OperationEnum::pop_, RegisterEnum::rbp_));
 //   asmGenerator.addCmd(to_cmd(OperationEnum::ret_));
-// };
+// }

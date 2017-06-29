@@ -47,4 +47,4 @@ struct Node {
 
 typedef std::shared_ptr<Node> pNode;
 
-};
+}

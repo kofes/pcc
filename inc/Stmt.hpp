@@ -87,4 +87,4 @@ struct StmtBlock : public Stmt {
   // void generate(Generator& asmGenerator) override;
   std::vector<pNode> node;
 };
-};
+}

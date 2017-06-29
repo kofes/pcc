@@ -18,7 +18,7 @@ std::string compiler::StmtIf::print ( unsigned int deep ) {
             << elseBody->print(deep+2);
 
   return sstream.str();
-};
+}
 
 std::string compiler::StmtWhile::print ( unsigned int deep ) {
   std::ostringstream sstream;
@@ -40,7 +40,7 @@ std::string compiler::StmtWhile::print ( unsigned int deep ) {
 
 
   return sstream.str();
-};
+}
 
 std::string compiler::StmtRepeat::print ( unsigned int deep ) {
   std::ostringstream sstream;
@@ -58,11 +58,11 @@ std::string compiler::StmtRepeat::print ( unsigned int deep ) {
           << "</repeat statement>";
 
   return sstream.str();
-};
+}
 
 void compiler::StmtRepeat::add ( const pNode& nd ) {
   body.push_back(nd);
-};
+}
 
 std::string compiler::StmtFor::print ( unsigned int deep ) {
   std::ostringstream sstream;
@@ -106,7 +106,7 @@ std::string compiler::StmtFor::print ( unsigned int deep ) {
           << "</for statement>";
 
   return sstream.str();
-};
+}
 
 std::string compiler::StmtAssignment::print ( unsigned int deep) {
   std::ostringstream sstream;
@@ -127,7 +127,7 @@ std::string compiler::StmtAssignment::print ( unsigned int deep) {
           << "</assignment statement>";
 
   return sstream.str();
-};
+}
 
 std::string compiler::StmtProcedure::print ( unsigned int deep ) {
   std::ostringstream sstream;
@@ -143,21 +143,21 @@ std::string compiler::StmtProcedure::print ( unsigned int deep ) {
           << "</procedure calling>";
 
   return sstream.str();
-};
+}
 
 std::string compiler::StmtBreak::print ( unsigned int deep ) {
   std::ostringstream sstream;
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
           << "<break stmt/>";
   return sstream.str();
-};
+}
 
 std::string compiler::StmtContinue::print ( unsigned int deep ) {
   std::ostringstream sstream;
   sstream << std::string(deep*compiler::DEEP_STEP, compiler::DEEP_CHAR)
           << "<continue stmt/>";
   return sstream.str();
-};
+}
 
 std::string compiler::StmtBlock::print ( unsigned int deep ) {
   std::ostringstream sstream;
@@ -170,8 +170,8 @@ std::string compiler::StmtBlock::print ( unsigned int deep ) {
             // << "------------------\n";
   sstream << "</block statement>\n";
   return sstream.str();
-};
+}
 
 void compiler::StmtBlock::add ( const pNode& nd ) {
   node.push_back(nd);
-};
+}

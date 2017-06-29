@@ -44,7 +44,7 @@ compiler::pExpr doUnOp ( std::shared_ptr<compiler::ExprUnOp> oper, compiler::pEx
     break;
   }
   return value;
-};
+}
 
 compiler::pExpr doBinOp ( std::shared_ptr<compiler::ExprBinOp> oper,
   const compiler::pExpr& left, const compiler::pExpr& right) {
@@ -537,7 +537,7 @@ compiler::pExpr doBinOp ( std::shared_ptr<compiler::ExprBinOp> oper,
       throw compiler::ExprException("Wrong binary operation at pos (" + std::to_string(oper->row) + ", " + std::to_string(oper->column) + ");");
   }
   return res;
-};
+}
 
 compiler::pExpr compiler::Parser::evalConstExpr ( pExpr& root, SymTable& vTable, TypeTable& tTable ) {
   pExpr res;
@@ -607,4 +607,4 @@ compiler::pExpr compiler::Parser::evalConstExpr ( pExpr& root, SymTable& vTable,
       default: break;
   }
   throw ExprException("wrong symbol \"" + root->name + "\" from pos ("+ std::to_string(root->row) + ", " + std::to_string(root->column) + ");");
-};
+}

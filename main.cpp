@@ -4,10 +4,13 @@
 #include "inc/Scanner.hpp"
 #include "inc/Parser.hpp"
 
+#include "CompilerConfig.hpp"
+
 const std::string help =
   "Usage\n\n"
   "   <exec_file> [option] <file>\n\n"
   "Options\n\n"
+  "   -v, --version          - Print current version\n"
   "   -s, --scanner          - Lexer -> print all lexems from <file> to &1\n"
   "   -p, --parser           - Parser -> print syntax trees of statements from <file> to &1\n"
   "   -e, --parse-expression - Parser -> print syntax tree of expressions from <file> to &1\n"
@@ -22,6 +25,14 @@ int main(int argc, char const *argv[]) {
     return 0;
   }
 
+  //PRINT CURRENT VERSION
+  if (!std::strcmp(argv[1], "--version") || !std::strcmp(argv[1], "-v")) {
+    std::cout << "Current version "
+              << COMPILER_VERSION_MAJOR << '.' << COMPILER_VERSION_MINOR
+              << std::endl;
+    return 0;
+  }
+  
   // SCANNER
   if (!std::strcmp(argv[1], "--scanner") || !std::strcmp(argv[1], "-s")) {
     compiler::Scanner scanner;

@@ -7,7 +7,7 @@ compiler::Scanner::Scanner ( const std::string& filename ) {
   row = 1;
   column = 0;
   initMap();
-};
+}
 
 void compiler::Scanner::open ( const std::string& filename ) {
   input.close();
@@ -17,7 +17,7 @@ void compiler::Scanner::open ( const std::string& filename ) {
   row = 1;
   column = 0;
   lexeme.clear();
-};
+}
 
 void compiler::Scanner::next ( void ) {
   if (!input.is_open())
@@ -135,7 +135,7 @@ void compiler::Scanner::next ( void ) {
   lexeme.clear();
   token = Token::END_OF_FILE;
   tag = Tag::UNDEFINED;
-};
+}
 
 void compiler::Scanner::readId ( void ) {
   sym = input.get();
@@ -161,7 +161,7 @@ void compiler::Scanner::readId ( void ) {
     token = iter->second.first;
     tag = iter->second.second;
   }
-};
+}
 
 void compiler::Scanner::readDec ( void ) {
   sym = input.get();
@@ -199,7 +199,7 @@ void compiler::Scanner::readDec ( void ) {
   token = Token::LITERAL;
   if (countDots) tag = Tag::FLOAT;
   else tag = Tag::INTEGER;
-};
+}
 
 void compiler::Scanner::readBin ( void ) {
   sym = input.get();
@@ -267,7 +267,7 @@ void compiler::Scanner::readOct ( void ) {
 
   token = Token::LITERAL;
   tag = Tag::INTEGER;
-};
+}
 
 void compiler::Scanner::readHex ( void ) {
   sym = input.get();
@@ -456,7 +456,7 @@ void compiler::Scanner::readPunct ( void ) {
   tag = iter->second.second;
   ++column;
   sym = input.get();
-};
+}
 
 std::string compiler::Lexeme::tokenName ( void ) const {
   switch (token) {
@@ -468,9 +468,9 @@ std::string compiler::Lexeme::tokenName ( void ) const {
     case (compiler::Token::SPACE) : return "SPACE";
     // case (compiler::Token::DIRECTIVE) : return "DIRECTIVE";
     default: break;
-  };
+  }
   return "UNDEFINED";
-};
+}
 
 compiler::Lexeme compiler::Scanner::lex ( void ) const {
   compiler::Lexeme res;
@@ -480,7 +480,7 @@ compiler::Lexeme compiler::Scanner::lex ( void ) const {
   res.token = token;
   res.name = lexeme;
   return res;
-};
+}
 
 void compiler::Scanner::initMap ( void ) {
   book = {
@@ -631,4 +631,4 @@ void compiler::Scanner::initMap ( void ) {
     {"XOR", std::make_pair(Token::OPERATOR, Tag::XOR)},             // -- 'xor'
   };
 
-};
+}

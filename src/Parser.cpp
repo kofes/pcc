@@ -8,24 +8,24 @@ compiler::Parser::Parser ( void ) {
   setPriorities();
   setTypeTable();
   setVarTable();
-};
+}
 
 compiler::Parser::Parser ( const std::string& filename ) : scanner(filename) {
   setPriorities();
   setTypeTable();
   setVarTable();
-};
+}
 
 void compiler::Parser::set ( const std::string& filename ) {
   scanner.open(filename);
-};
+}
 
 void compiler::Parser::parseExpr ( void ) {
   scanner.next();
   root = parseExpr(compiler::Priority::LOWEST);
   if (scanner.lex().token != Token::END_OF_FILE)
     err(scanner.lex());
-};
+}
 
 void compiler::Parser::parseTable ( void ) {
   programTokenChecked = false;
@@ -44,7 +44,7 @@ void compiler::Parser::parseTable ( void ) {
     }
     programTokenChecked = true;
   }
-};
+}
 
 void compiler::Parser::parse ( void ) {
   programTokenChecked = false;
@@ -62,7 +62,7 @@ void compiler::Parser::parse ( void ) {
     }
     programTokenChecked = true;
   }
-};
+}
 
 std::string compiler::Parser::print ( void ) {
   std::ostringstream out;
@@ -79,7 +79,7 @@ std::string compiler::Parser::print ( void ) {
       << printExprs();
 
   return out.str();
-};
+}
 
 std::string compiler::Parser::printExprs ( void ) {
   // if (scanner.lex().token != Token::END_OF_FILE) err(scanner.lex());//Program's end is 'end.'
@@ -89,7 +89,7 @@ std::string compiler::Parser::printExprs ( void ) {
     out << root->print(0);
 
   return out.str();
-};
+}
 
 std::string compiler::Parser::printVarTable ( void ) {
   std::ostringstream out;
@@ -98,7 +98,7 @@ std::string compiler::Parser::printVarTable ( void ) {
         << "<var>" << elem.second->print(0) << "</var>\n";
 
   return out.str();
-};
+}
 
 std::string compiler::Parser::printFuncTable ( void ) {
   std::ostringstream out;
@@ -107,7 +107,7 @@ std::string compiler::Parser::printFuncTable ( void ) {
       out << elem.second->print(1) << '\n';
 
   return out.str();
-};
+}
 
 std::string compiler::Parser::printTypeTable ( void ) {
   std::ostringstream out;
@@ -124,7 +124,7 @@ std::string compiler::Parser::printTypeTable ( void ) {
   }
 
   return out.str();
-};
+}
 
 std::vector<compiler::pExpr> compiler::Parser::parseArgs ( void ) {
   std::vector<compiler::pExpr> expr;
@@ -138,22 +138,22 @@ std::vector<compiler::pExpr> compiler::Parser::parseArgs ( void ) {
     lexeme = scanner.lex();
   }
   return expr;
-};
+}
 
 compiler::Priority compiler::Parser::upPriority ( const compiler::Priority& pr ) {
   if (pr == compiler::Priority::HIGHEST)
     return compiler::Priority::HIGHEST;
   return (compiler::Priority)((unsigned short)pr - 1);
-};
+}
 
 bool compiler::Parser::checkPriority ( const compiler::Priority& pr, const Tag& tag ) {
   auto tmp = binaryPriority.find(tag);
   return tmp != binaryPriority.end() && tmp->second == pr;
-};
+}
 
 bool compiler::Parser::isUnary ( const Tag& tag ) {
   return unaryPriority.find(tag) != unaryPriority.end();
-};
+}
 
 void compiler::Parser::err ( const std::string& expected_token ) {
   compiler::Lexeme lexeme = scanner.lex();
@@ -162,41 +162,41 @@ void compiler::Parser::err ( const std::string& expected_token ) {
   if (lexeme.token == Token::END_OF_FILE)
     throw ExprException("Unexpected end of file in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + "); expected '" + expected_token + "';");
   throw ExprException("Unexpected token '" + lexeme.name + "' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + "); expected '" + expected_token + "';");
-};
+}
 
 void compiler::Parser::err ( const compiler::Lexeme& lexeme ) {
   if (lexeme.token == Token::END_OF_FILE)
     throw ExprException("Unexpected end of file in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
   throw ExprException("Unexpected token '" + lexeme.name + "' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
-};
+}
 
 void compiler::Parser::errUndefType ( void ) {
   compiler::Lexeme lexeme = scanner.lex();
   if (lexeme.token == Token::END_OF_FILE)
     throw ExprException("Unexpected end of file in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + "); expected `type name`;");
   throw ExprException("Undefined type '" + lexeme.name + "' in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
-};
+}
 
 void compiler::Parser::errDuplicated ( void ) {
   compiler::Lexeme lexeme = scanner.lex();
   throw ExprException("Duplicate identifier \"" + lexeme.name + "\" in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
-};
+}
 
 void compiler::Parser::errAssignment ( const Lexeme& lexeme ) {
   throw ExprException("Bad assignment at line: " + std::to_string(lexeme.row) + ";");
-};
+}
 
 void compiler::Parser::errHighLow ( const compiler::Lexeme& lexeme ) {
   throw ExprException("Array 'high' < 'low' from pos ("+std::to_string(lexeme.row)+", "+std::to_string(lexeme.column)+");");
-};
+}
 
 void compiler::Parser::errDecl ( const compiler::Lexeme& lexeme ) {
   throw ExprException("Identifier "+lexeme.name+" at pos ("+std::to_string(lexeme.row)+", "+std::to_string(lexeme.column)+") wasn't declared;");
-};
+}
 
 void compiler::Parser::errConst ( const Lexeme& lexeme ) {
   throw ExprException("Const "+lexeme.name+" at pos ("+std::to_string(lexeme.row)+", "+std::to_string(lexeme.column)+") assignment;");
-};
+}
 
 void compiler::Parser::checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable ) {
   if (lexeme.tag != Tag::IDENTIFIER)
@@ -208,7 +208,7 @@ void compiler::Parser::checkIdent ( const Lexeme& lexeme, SymTable& vTable, Type
      lexeme.name == "write" || lexeme.name == "writeln" ||
      lexeme.name == "read" || lexeme.name == "readln")
     errDuplicated();
-};
+}
 
 void compiler::Parser::setPriorities ( void ) {
   binaryPriority = {
@@ -240,7 +240,7 @@ void compiler::Parser::setPriorities ( void ) {
     {Tag::ADD, compiler::Priority::HIGHEST},
     {Tag::ADDRESS, compiler::Priority::HIGHEST}
   };
-};
+}
 
 void compiler::Parser::setTypeTable ( void ) {
   // typeTable[tagBook.at(Tag::POINTER)] = compiler::pSymType(new TypeScalar(SCALAR_TYPE::POINTER));
@@ -248,7 +248,7 @@ void compiler::Parser::setTypeTable ( void ) {
   typeTable[tagBook.at(Tag::REAL)] = compiler::pSymType(new TypeScalar(SCALAR_TYPE::REAL));
   typeTable[tagBook.at(Tag::CHAR)] = compiler::pSymType(new TypeScalar(SCALAR_TYPE::CHAR));
   typeTable[tagBook.at(Tag::BOOLEAN)] = compiler::pSymType(new TypeScalar(SCALAR_TYPE::BOOLEAN));
-};
+}
 
 void compiler::Parser::setVarTable ( void ) {
   pSymVar pi(new SymVar("PI"));
@@ -256,7 +256,7 @@ void compiler::Parser::setVarTable ( void ) {
   pi->value = "3.1415926535897932385";
   pi->type = typeTable[tagBook.at(Tag::REAL)];
   varTable[pi->name] = pi;
-};
+}
 
 std::tuple<compiler::pSymTable, std::string> compiler::Parser::parseParams( void ) {
   Lexeme lexeme = scanner.lex();
@@ -340,7 +340,7 @@ std::tuple<compiler::pSymTable, std::string> compiler::Parser::parseParams( void
             }
         break;
         default: err("'parameter's modificator'");
-    };
+    }
     //resTable < vars, resStr < str
     //type equals over!
     if (type_tmp != nullptr)
@@ -377,7 +377,7 @@ std::tuple<compiler::pSymTable, std::string> compiler::Parser::parseParams( void
     countArgs = 0;
   }
   return std::make_tuple(resTable, sstream.str());
-};
+}
 
 compiler::pSymVar compiler::Parser::checkType ( pSymVar res, pSymType type, pExpr src, SymTable& vTable, TypeTable& tTable ) {
   if (res == nullptr)
@@ -444,7 +444,7 @@ compiler::pSymVar compiler::Parser::checkType ( pSymVar res, pSymType type, pExp
   res->value = src->name;
 
   return res;
-};
+}
 
 void compiler::Parser::checkFunc ( const Lexeme& lexeme, IdentifierType type, const std::string& args ) {
     auto iter = funcTable.find(lexeme.name);
@@ -453,7 +453,7 @@ void compiler::Parser::checkFunc ( const Lexeme& lexeme, IdentifierType type, co
     if (iter->second.find(args) == iter->second.end())
         return;
     throw ExprException("Duplication of function \"" + lexeme.name + "\" in pos (" + std::to_string(lexeme.row) + ", " + std::to_string(lexeme.column) + ");");
-};
+}
 
 void compiler::Parser::generate ( void ) {
   // for (auto elem : varTable)
@@ -463,6 +463,8 @@ void compiler::Parser::generate ( void ) {
   //     func.second->generate(asmGenerator);
   // asmGenerator.addLabel("main");
   // root->generate(asmGenerator);
-};
+}
 
-std::string compiler::Parser::printAsm ( void ) {};
+std::string compiler::Parser::printAsm ( void ) {
+  return "";
+}

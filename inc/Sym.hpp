@@ -115,4 +115,4 @@ struct TypeAlias : public SymType {
   std::string print ( unsigned int deep ) override;
   pSymType type;
 };
-};
+}
