@@ -1,6 +1,6 @@
 #include "../inc/Asm.hpp"
 
-compiler::Mem::Mem(compiler::pOperand src) : size_(MAIN_WORD_STR) {
+compiler::Mem::Mem(compiler::pOperand src) : size_(QWORD_STR) {
   pMem mem = std::dynamic_pointer_cast<Mem>(src);
   operand_ = mem->operand_;
   offset_ = mem->offset_;
@@ -17,7 +17,7 @@ void compiler::Generator::addCmd(pCmd cmd) {
            cmd->operand1_->operandType() == OperandEnum::reg_ &&
            std::dynamic_pointer_cast<Reg>(cmd->operand1_)->reg() == RegisterEnum::rsp_ &&
            cmd->operand2_->operandType() == OperandEnum::imm_int_) {
-    auto int_imm_size = std::dynamic_pointer_cast<ImmInt>(cmd->operand2_)->val() / MAIN_WORD_SIZE;
+    auto int_imm_size = std::dynamic_pointer_cast<ImmInt>(cmd->operand2_)->val() / QWORD_SIZE;
     if (cmd->oper_ == OperationEnum::add_)
       countPushes += int_imm_size;
     else if (cmd->oper_ == OperationEnum::sub_)
@@ -30,12 +30,12 @@ void compiler::Generator::write(const std::string &format) {
   bool sub = false;
   addCmd(to_cmd(OperationEnum::mov_, RegisterEnum::rdi_, format));
   if (!(countPushes % 2)) {
-    addCmd(to_cmd(OperationEnum::sub_, RegisterEnum::rsp_, MAIN_WORD_SIZE));
+    addCmd(to_cmd(OperationEnum::sub_, RegisterEnum::rsp_, QWORD_SIZE));
     sub = true;
   }
   addCmd(to_cmd(OperationEnum::call_, "printf"));
   if (sub)
-    addCmd(to_cmd(OperationEnum::add_, RegisterEnum::rsp_, MAIN_WORD_SIZE));
+    addCmd(to_cmd(OperationEnum::add_, RegisterEnum::rsp_, QWORD_SIZE));
 }
 
 void compiler::Generator::writeInt() {

@@ -6,13 +6,22 @@
 #include <list>
 #include <string>
 #include <sstream>
-//namespace compiler::asm
+
 namespace compiler {
 
-const static int MAIN_WORD_SIZE = 8;
-const static std::string MAIN_WORD_STR = "qword";
+const static int BYTE_SIZE = 1;
+const static int WORD_SIZE = 2;
+const static int DWORD_SIZE = 4;
+const static int QWORD_SIZE = 8;
+
+const static std::string BYTE_STR = "byte";
+const static std::string WORD_STR = "word";
+const static std::string DWORD_STR = "dword";
+const static std::string QWORD_STR = "qword";
+
 const static std::string DEFINE_NUM = "dq";
 const static std::string DEFINE_CHAR = "db";
+
 const static std::string FORMAT_INT = "formatInt";
 const static std::string FORMAT_FLOAT = "formatFloat";
 
@@ -28,7 +37,6 @@ enum class RegisterEnum : unsigned char {
   xmm0_,
   xmm1_
 };
-
 enum class OperationEnum : size_t {
   ret_,
 
@@ -72,7 +80,6 @@ enum class OperationEnum : size_t {
   shl_,
   label_
 };
-
 enum class CmdEnum : unsigned char {
     line_,
     section_,
@@ -89,7 +96,6 @@ enum class CmdEnum : unsigned char {
     cmd2_,
     label_,
 };
-
 enum class OperandEnum : unsigned char {
   operand_,
   reg_,
@@ -138,7 +144,6 @@ static std::map<OperationEnum, std::string> operations = {
   {OperationEnum::shl_, "shl"},
   {OperationEnum::label_, "label"},
 };
-
 static std::map<RegisterEnum, std::string> registers = {
   {RegisterEnum::rax_, "rax"},
   {RegisterEnum::rbx_, "rbx"},
@@ -166,7 +171,6 @@ struct Operand {
   virtual OperandEnum operandType() { return OperandEnum::operand_; };
   virtual bool isImmediate() { return false; };
 };
-
 struct Cmd {
   Cmd (OperationEnum oper, pOperand operand1 = pOperand(), pOperand operand2 = pOperand()) : oper_(oper), operand1_(operand1), operand2_(operand2) {};
   virtual std::string name() { return ""; };
@@ -180,19 +184,16 @@ struct Cmd0 : public Cmd {
   std::string name() override { return operations[oper_]; };
   CmdEnum cmdType() override { return CmdEnum::cmd0_; };
 };
-
 struct Cmd1 : public Cmd {
   Cmd1(OperationEnum oper, pOperand operand) : Cmd(oper, operand) {};
   std::string name() override { return operations[oper_] + " " + operand1_->name(); };
   CmdEnum cmdType() override { return CmdEnum::cmd1_; };
 };
-
 struct Cmd2 : public Cmd {
   Cmd2(OperationEnum oper, pOperand operand1, pOperand operand2) : Cmd(oper, operand1, operand2) {};
   std::string name() override { return operations[oper_] + " " + operand1_->name() + " " + operand2_->name(); };
   CmdEnum cmdType() override { return CmdEnum::cmd2_; };
 };
-
 struct Label : public Cmd {
   Label(const std::string& name) : Cmd(OperationEnum::label_) {};
   CmdEnum cmdType() override { return CmdEnum::label_; };
@@ -209,7 +210,6 @@ struct Reg : public Operand {
 private:
   RegisterEnum reg_;
 };
-
 struct Immediate : public Operand {
   bool isImmediate() override { return true; };
 };
@@ -222,7 +222,6 @@ struct ImmInt : public Immediate {
 private:
   int val_;
 };
-
 struct ImmString : public Immediate {
   ImmString (const std::string& val) : val_(val) {};
   std::string name() override { return val_; };
@@ -234,7 +233,7 @@ private:
 struct Mem : public Operand {
   Mem (const std::string& name, int offset = 0) : operand_(new ImmString(name)), offset_(offset) {};
   Mem (RegisterEnum reg, int offset = 0) : operand_(new Reg(reg)), offset_(offset) {};
-  Mem (const Mem& src) : operand_(src.operand_), offset_(src.offset_), size_(MAIN_WORD_STR) {};
+  Mem (const Mem& src) : operand_(src.operand_), offset_(src.offset_), size_(QWORD_STR) {};
   Mem (pOperand src);
   std::string name() override;
   OperandEnum operandType() override { return OperandEnum::mem_; };
@@ -254,28 +253,24 @@ struct Data {
 protected:
   std::string name_;
 };
-
 struct Int : public Data {
   Int (const std::string& name, int val) : Data(name), val_(val) {};
   std::string name() override { return name_ + ": " + DEFINE_NUM + " " + std::to_string(val_); };
 private:
   int val_;
 };
-
 struct Float : public Data {
   Float (const std::string& name, double val) : Data(name), val_(val) {};
   std::string name() override { return name_ + ": " + DEFINE_NUM + " " + std::to_string(val_); };
 private:
   double val_;
 };
-
 struct Array : public Data {
   Array (const std::string& name, int size) : Data(name), size_(size) {};
   std::string name() override { return name_+": times "+std::to_string(size_) + " " + DEFINE_CHAR; };
 private:
   int size_;
 };
-
 struct String : public Data {
   String (const std::string& name, std::string val) : Data(name), val_(val) {};
   std::string name() override { return name_ + ": " + DEFINE_CHAR + " " + val_ + ", 0"; };
