@@ -8,21 +8,8 @@
 
 namespace compiler {
 
-enum class NodeEnum {
-  Expr, Sym, Stmt
-};
-
-enum class ExprEnum {
-  BinOp, UnOp, Integer, Real, Char, String, Identifier, Record, Array, Function
-};
-
-enum class SymEnum {
-  Var, Function, Scalar, Array, Record, Pointer, Alias
-};
-
-enum class StmtEnum {
-  If, While, Repeat, For, Empty, Assignment, Block, Procedure, Break, Continue
-};
+struct Node;
+typedef std::shared_ptr<Node> pNode;
 
 const unsigned int DEEP_STEP = 3;
 const char DEEP_CHAR = ' ';
@@ -36,15 +23,10 @@ private:
 };
 
 struct Node {
-  virtual std::string print ( unsigned int deep ) {
-    std::ostringstream sstream;
-    sstream << std::string(deep * DEEP_STEP, DEEP_CHAR) << "<ghost node>" << std::endl;
-    return sstream.str();
-  };
-  // virtual void generate(compiler::Generator& asmGenerator);
-  NodeEnum nodeType;
+virtual std::string print ( unsigned int deep ) {
+  std::ostringstream sstream;
+  sstream << std::string(deep * DEEP_STEP, DEEP_CHAR) << "<ghost node>" << std::endl;
+  return sstream.str();
+}
 };
-
-typedef std::shared_ptr<Node> pNode;
-
 }

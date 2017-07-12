@@ -48,7 +48,7 @@ compiler::pExpr compiler::Parser::parseFactor ( void ) {
 
   if (lexeme.token == Token::END_OF_FILE) err();
   err(lexeme);
-  return compiler::pExpr(new Expr(lexeme));
+  return pExpr();
 }
 
 compiler::pExpr compiler::Parser::parseIdentifier ( compiler::Lexeme lexeme ) {

@@ -1,20 +1,21 @@
 #include "../inc/Parser.hpp"
 
-compiler::pSymType compiler::Parser::parseType ( SymTable& vTable, TypeTable& tTable ) {
+compiler::pSymType compiler::Parser::parseType ( void ) {
   pSymType type = nullptr;
+  pSymTable table;
   Lexeme lexeme = scanner.lex();
   switch (lexeme.tag) {
     case (Tag::ARRAY) :
-      type = parseArray(vTable, tTable);
+      type = parseArray();
     break;
     // case (Tag::SET) :
     case (Tag::POINTER) :
-      type = parsePointer(vTable, tTable);
+      type = parsePointer();
     break;
     default :
-      auto iter = typeTable.find(lexeme.name);
-      if (iter == typeTable.end())
-        errUndefType();
+      table = symStack.find(lexeme.name);
+      pSym elem = table->find(lexeme.name);
+      if
       type = evalAlias(iter->second);
   }
 

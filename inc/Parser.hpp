@@ -33,7 +33,7 @@ class Parser {
 public:
   Parser ( void );
   Parser ( const std::string& filename );
-  void set ( const std::string& filename );
+  void setFileName ( const std::string& filename );
   void parse ( void );
   void parseExpr ( void );
   void parseTable ( void );
@@ -72,54 +72,52 @@ private:
       void errDecl ( const Lexeme& lexeme );
       void errConst ( const Lexeme& lexeme );
       void errAssignment ( const Lexeme& lexeme );
-      void checkIdent ( const Lexeme& lexeme, SymTable& vTable, TypeTable& tTable );
-      pSymVar checkType ( pSymVar res, pSymType type, pExpr src, SymTable& vTable, TypeTable& tTable );
+      pSymVar checkType ( pSymVar res, pSymType type, pExpr src );
       void checkFunc ( const Lexeme& name, IdentifierType type, const std::string& args = "" );
 
-      pSymType evalVarType ( pExpr val, SymTable& vTable );
-      pSymType evalExprType( pExpr val, SymTable& vTable );
+      pSymType evalVarType ( pExpr val );
+      pSymType evalExprType( pExpr val );
 
     //
 
-    pStmt parseStmt ( SymTable& vTable );
+    pStmt parseStmt ( void );
 
-    pStmt parseSimpleStmt ( SymTable& vTable );
-    pStmt parseIf ( SymTable& vTable );
-    pStmt parseWhile ( SymTable& vTable );
-    pStmt parseRepeat ( SymTable& vTable );
-    pStmt parseFor ( SymTable& vTable );
+    pStmt parseSimpleStmt ( void );
+    pStmt parseIf ( void );
+    pStmt parseWhile ( void );
+    pStmt parseRepeat ( void );
+    pStmt parseFor ( void );
     pStmt parseEmpty ( void );
-    pStmt parseBlock ( SymTable& vTable );
+    pStmt parseBlock ( void );
 
     pStmt parseBreak ( void );
     pStmt parseContinue ( void );
 
-    pSymType parseType ( SymTable& vTable, TypeTable& tTable );
-    pSymType parseArray ( SymTable& vTable, TypeTable& tTable );
-    pSymType parseRecord ( const std::string& name, SymTable& vTable, TypeTable& tTable );
+    pSymType parseType ( void );
+    pSymType parseArray ( void );
+    pSymType parseRecord ( const std::string& name, SymStack& symStack );
     pSymType parseEnum ( void );
-    pSymType parsePointer ( SymTable& vTable, TypeTable& tTable );
+    pSymType parsePointer ( void );
 
     void parseProgramName ( const compiler::Lexeme& program );
 
-    void parseConst ( SymTable& vTable, TypeTable& tTable );
-    void parseVar ( SymTable& vTable, TypeTable& tTable );
+    void parseConst ( void );
+    void parseVar ( void );
     //Initialization for Const-decl and Var-decl variables
-    void parseConstExpr ( SymTable& vTable, TypeTable& tTable );
-    pExpr evalConstExpr ( pExpr& root, SymTable& vTable, TypeTable& tTable );
+    void parseConstExpr ( void );
+    pExpr evalConstExpr ( pExpr& root );
 
     void parseFunction ( bool expectRetVal = true );
     // void parseProcedure ( void );
     std::tuple<pSymTable, std::string> parseParams( void );
 
-    void parseAlias ( SymTable& vTable, TypeTable& tTable );
+    void parseAlias ( void );
 
     void setTypeTable ( void );
     void setVarTable ( void );
     bool unification ( const std::string& first, const std::string& second);
     //Variables
-    SymTable varTable;
-    TypeTable typeTable;
+    SymStack& symStack;
     //{first: nameFunc; second: {key: args; value: descriptor of function/procedure;}}
     std::map< std::string, std::map< std::string, pSym> > funcTable;
     //Runtime-functions
